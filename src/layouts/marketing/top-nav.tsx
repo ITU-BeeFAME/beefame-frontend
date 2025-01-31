@@ -18,7 +18,6 @@ import { RouterLink } from 'src/components/router-link';
 import { version } from 'src/config';
 
 import { paths } from 'src/paths';
-import { PagesPopover } from './pages-popover';
 import { TopNavItem } from './top-nav-item';
 import { usePathname } from 'next/navigation';
 
