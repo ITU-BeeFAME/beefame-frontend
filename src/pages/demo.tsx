@@ -38,6 +38,14 @@ import {
   Bar,
   ReferenceLine,
   Cell,
+  LineChart,
+  Line,
+  Legend,
+  RadarChart,
+  PolarGrid,
+  PolarAngleAxis,
+  PolarRadiusAxis,
+  Radar,
 } from 'recharts';
 import { NextPage } from 'next';
 import { Layout as MarketingLayout } from 'src/layouts/marketing';
@@ -275,6 +283,312 @@ const MetricChart = ({ metric }: { metric: BiasMetric }) => {
             ))}
           </Bar>
         </BarChart>
+      </ResponsiveContainer>
+    </Box>
+  );
+};
+
+const MetricLineChart = ({ metric }: { metric: BiasMetric }) => {
+  const data: ChartDataItem[] = [
+    { name: 'original', value: metric.value },
+    ...(metric.mitigatedValue ? [{ name: 'mitigated', value: metric.mitigatedValue }] : []),
+  ];
+
+  // Determine y-axis range based on metric name
+  const getYAxisConfig = (metricName: string) => {
+    if (metricName === 'Disparate Impact') {
+      return {
+        domain: [0, 2],
+        ticks: [0, 0.5, 1, 1.5, 2],
+        referenceLine: 1,
+      };
+    }
+    return {
+      domain: [-1, 1],
+      ticks: [-1, -0.5, 0, 0.5, 1],
+      referenceLine: 0,
+    };
+  };
+
+  const yAxisConfig = getYAxisConfig(metric.name);
+
+  return (
+    <Box
+      sx={{
+        width: '100%',
+        height: 200,
+        p: 2,
+        borderRadius: 2,
+        bgcolor: 'background.paper',
+        border: '1px solid',
+        borderColor: 'divider',
+        transition: 'all 0.2s ease-in-out',
+      }}
+    >
+      <Box
+        sx={{
+          mb: 1,
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+        }}
+      >
+        <Typography variant="body2">{metric.name}</Typography>
+        <Stack
+          direction="row"
+          spacing={2}
+          alignItems="center"
+        >
+          <Typography
+            variant="body2"
+            sx={{
+              fontWeight: 500,
+              display: 'flex',
+              alignItems: 'center',
+            }}
+          >
+            <Box
+              sx={{
+                width: 8,
+                height: 8,
+                borderRadius: '50%',
+                bgcolor: '#1976d2',
+                mr: 1,
+              }}
+            />
+            Original: {metric.value.toFixed(2)}
+          </Typography>
+          {metric.mitigatedValue !== undefined && (
+            <Typography
+              variant="body2"
+              sx={{
+                fontWeight: 500,
+                display: 'flex',
+                alignItems: 'center',
+              }}
+            >
+              <Box
+                sx={{
+                  width: 8,
+                  height: 8,
+                  borderRadius: '50%',
+                  bgcolor: '#2e7d32',
+                  mr: 1,
+                }}
+              />
+              Mitigated: {metric.mitigatedValue.toFixed(2)}
+            </Typography>
+          )}
+        </Stack>
+      </Box>
+      <ResponsiveContainer
+        width="100%"
+        height="100%"
+      >
+        <LineChart
+          data={data}
+          margin={{ top: 20, right: 5, left: 5, bottom: 5 }}
+        >
+          <CartesianGrid
+            strokeDasharray="3 3"
+            stroke="#f0f0f0"
+          />
+          <XAxis
+            dataKey="name"
+            tick={{ fontSize: 12 }}
+            axisLine={false}
+          />
+          <YAxis
+            domain={yAxisConfig.domain}
+            ticks={yAxisConfig.ticks}
+            tick={{ fontSize: 12 }}
+            axisLine={false}
+          />
+          <Tooltip
+            formatter={(value: number) => [value.toFixed(2)]}
+            contentStyle={{
+              background: '#fff',
+              border: 'none',
+              borderRadius: 8,
+              boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
+            }}
+          />
+          <ReferenceLine
+            y={yAxisConfig.referenceLine}
+            stroke="#666"
+            strokeWidth={1}
+            label={{
+              value: metric.name === 'Disparate Impact' ? 'Fair' : '',
+              position: 'right',
+              fill: '#666',
+            }}
+          />
+          {metric.name === 'Disparate Impact' && (
+            <>
+              <ReferenceLine
+                y={0.8}
+                stroke="#666"
+                strokeDasharray="3 3"
+                strokeWidth={1}
+              />
+              <ReferenceLine
+                y={1.2}
+                stroke="#666"
+                strokeDasharray="3 3"
+                strokeWidth={1}
+              />
+            </>
+          )}
+          <Line
+            type="monotone"
+            dataKey="value"
+            stroke="#1976d2"
+            strokeWidth={2}
+            dot={{
+              stroke: '#1976d2',
+              strokeWidth: 2,
+              r: 4,
+              fill: '#fff',
+            }}
+            activeDot={{
+              stroke: '#1976d2',
+              strokeWidth: 2,
+              r: 6,
+              fill: '#fff',
+            }}
+          />
+        </LineChart>
+      </ResponsiveContainer>
+    </Box>
+  );
+};
+
+const MetricRadarChart = ({ metrics }: { metrics: BiasMetric[] }) => {
+  // Transform data for radar chart
+  const data = metrics.map((metric) => ({
+    name: metric.name.replace(/([A-Z])/g, ' $1').trim(), // Add spaces before capital letters
+    original: Math.abs(metric.value),
+    mitigated: metric.mitigatedValue ? Math.abs(metric.mitigatedValue) : undefined,
+  }));
+
+  return (
+    <Box
+      sx={{
+        width: '100%',
+        height: 400,
+        p: 2,
+        borderRadius: 2,
+        bgcolor: 'background.paper',
+        border: '1px solid',
+        borderColor: 'divider',
+        transition: 'all 0.2s ease-in-out',
+      }}
+    >
+      <Typography
+        variant="h6"
+        align="center"
+        gutterBottom
+        sx={{ fontWeight: 500 }}
+      >
+        Metrics Overview
+      </Typography>
+      <Box sx={{ mb: 2 }}>
+        <Stack
+          direction="row"
+          spacing={3}
+          justifyContent="center"
+        >
+          <Typography
+            variant="body2"
+            sx={{
+              fontWeight: 500,
+              display: 'flex',
+              alignItems: 'center',
+            }}
+          >
+            <Box
+              sx={{
+                width: 8,
+                height: 8,
+                borderRadius: '50%',
+                bgcolor: '#1976d2',
+                mr: 1,
+                opacity: 0.7,
+              }}
+            />
+            Original
+          </Typography>
+          {metrics.some((m) => m.mitigatedValue !== undefined) && (
+            <Typography
+              variant="body2"
+              sx={{
+                fontWeight: 500,
+                display: 'flex',
+                alignItems: 'center',
+              }}
+            >
+              <Box
+                sx={{
+                  width: 8,
+                  height: 8,
+                  borderRadius: '50%',
+                  bgcolor: '#2e7d32',
+                  mr: 1,
+                  opacity: 0.7,
+                }}
+              />
+              Mitigated
+            </Typography>
+          )}
+        </Stack>
+      </Box>
+      <ResponsiveContainer
+        width="100%"
+        height="100%"
+      >
+        <RadarChart
+          cx="50%"
+          cy="50%"
+          outerRadius="80%"
+          data={data}
+        >
+          <PolarGrid gridType="polygon" />
+          <PolarAngleAxis
+            dataKey="name"
+            tick={{ fill: 'text.secondary', fontSize: 12 }}
+          />
+          <PolarRadiusAxis
+            angle={90}
+            domain={[0, 1]}
+            tick={{ fontSize: 12 }}
+          />
+          <Radar
+            name="Original"
+            dataKey="original"
+            stroke="#1976d2"
+            fill="#1976d2"
+            fillOpacity={0.3}
+          />
+          {metrics.some((m) => m.mitigatedValue !== undefined) && (
+            <Radar
+              name="Mitigated"
+              dataKey="mitigated"
+              stroke="#2e7d32"
+              fill="#2e7d32"
+              fillOpacity={0.3}
+            />
+          )}
+          <Tooltip
+            formatter={(value: number) => [value.toFixed(3)]}
+            contentStyle={{
+              background: '#fff',
+              border: 'none',
+              borderRadius: 8,
+              boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
+            }}
+          />
+          <Legend />
+        </RadarChart>
       </ResponsiveContainer>
     </Box>
   );
@@ -954,17 +1268,41 @@ const Page: NextPage = () => {
                               container
                               spacing={3}
                             >
-                              {section.metrics.map((metric, idx) => (
+                              {/* {section.metrics.map((metric, idx) => (
                                 <Grid
                                   item
                                   xs={12}
-                                  sm={6}
-                                  md={4}
                                   key={idx}
                                 >
-                                  <MetricChart metric={metric} />
+                                  <Stack spacing={3}>
+                                    <Grid
+                                      container
+                                      spacing={3}
+                                    >
+                                      <Grid
+                                        item
+                                        xs={12}
+                                        md={6}
+                                      >
+                                        <MetricChart metric={metric} />
+                                      </Grid>
+                                      <Grid
+                                        item
+                                        xs={12}
+                                        md={6}
+                                      >
+                                        <MetricLineChart metric={metric} />
+                                      </Grid>
+                                    </Grid>
+                                  </Stack>
                                 </Grid>
-                              ))}
+                              ))} */}
+                              <Grid
+                                item
+                                xs={12}
+                              >
+                                <MetricRadarChart metrics={section.metrics} />
+                              </Grid>
                             </Grid>
                           </Stack>
                         </Paper>
@@ -1261,17 +1599,41 @@ const Page: NextPage = () => {
                               container
                               spacing={3}
                             >
-                              {section.metrics.map((metric, idx) => (
+                              {/* {section.metrics.map((metric, idx) => (
                                 <Grid
                                   item
                                   xs={12}
-                                  sm={6}
-                                  md={4}
                                   key={idx}
                                 >
-                                  <MetricChart metric={metric} />
+                                  <Stack spacing={3}>
+                                    <Grid
+                                      container
+                                      spacing={3}
+                                    >
+                                      <Grid
+                                        item
+                                        xs={12}
+                                        md={6}
+                                      >
+                                        <MetricChart metric={metric} />
+                                      </Grid>
+                                      <Grid
+                                        item
+                                        xs={12}
+                                        md={6}
+                                      >
+                                        <MetricLineChart metric={metric} />
+                                      </Grid>
+                                    </Grid>
+                                  </Stack>
                                 </Grid>
-                              ))}
+                              ))} */}
+                              <Grid
+                                item
+                                xs={12}
+                              >
+                                <MetricRadarChart metrics={section.metrics} />
+                              </Grid>
                             </Grid>
                           </Stack>
                         </Paper>
