@@ -1,8 +1,8 @@
 {
-  "name": "@devias-kit-pro/next-pages",
-  "version": "6.4.2",
-  "author": "Devias",
-  "homepage": "https://devias.io",
+  "name": "bee-fair-v2",
+  "version": "1.0.0",
+  "author": "Bee Fair",
+  "homepage": "https://beefair.site",
   "private": true,
   "scripts": {
     "dev": "next",
