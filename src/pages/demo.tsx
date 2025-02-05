@@ -59,7 +59,7 @@ interface SensitiveFeature {
 }
 
 interface Dataset {
-  id: string;
+  id: number;
   name: string;
   slug: string;
   url: string;
@@ -69,7 +69,7 @@ interface Dataset {
 }
 
 interface Classifier {
-  id: string;
+  id: number;
   name: string;
   url: string;
 }
@@ -467,8 +467,8 @@ const MetricRadarChart = ({ metrics }: { metrics: BiasMetric[] }) => {
   // Transform data for radar chart
   const data = metrics.map((metric) => ({
     name: metric.name.replace(/([A-Z])/g, ' $1').trim(), // Add spaces before capital letters
-    original: Math.abs(metric.value),
-    mitigated: metric.mitigatedValue ? Math.abs(metric.mitigatedValue) : undefined,
+    original: 1 - Math.abs(metric.value),
+    mitigated: metric.mitigatedValue ? 1 - Math.abs(metric.mitigatedValue) : undefined,
   }));
 
   return (
@@ -709,8 +709,8 @@ const Page: NextPage = () => {
       setAnalysisError(null);
       try {
         const response = await api.post<AnalysisResponse>('/analysis', {
-          dataset_name: selectedDataset.slug,
-          classifier_name: selectedClassifier.name,
+          dataset_names: [selectedDataset.slug],
+          classifier_names: [selectedClassifier.name],
         });
 
         // Transform API response to BiasSection format
@@ -756,9 +756,9 @@ const Page: NextPage = () => {
       try {
         // Simulated API call to /evaluate endpoint
         const response = await api.post<AnalysisResponse>('/evaluation', {
-          dataset_name: selectedDataset?.slug,
-          classifier_name: selectedClassifier?.name,
-          method_name: selectedMitigation,
+          dataset_names: [selectedDataset?.slug],
+          classifier_names: [selectedClassifier?.name],
+          method_names: [selectedMitigation],
         });
 
         // Update existing analysis data with mitigation results
@@ -1022,7 +1022,7 @@ const Page: NextPage = () => {
                             <RadioGroup
                               value={selectedClassifier?.id || ''}
                               onChange={(e) => {
-                                const selected = classifiers.find((c) => c.id === e.target.value);
+                                const selected = classifiers.find((c) => c.id === +e.target.value);
                                 if (selected) handleClassifierSelect(selected);
                               }}
                             >

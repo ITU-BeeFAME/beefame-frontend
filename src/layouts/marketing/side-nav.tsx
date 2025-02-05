@@ -4,11 +4,8 @@ import Box from '@mui/material/Box';
 import ButtonBase from '@mui/material/ButtonBase';
 import Drawer from '@mui/material/Drawer';
 import Stack from '@mui/material/Stack';
-
+import NextLink from 'next/link';
 import { Logo } from 'src/components/logo';
-import { RouterLink } from 'src/components/router-link';
-
-import { paths } from 'src/paths';
 
 import { SideNavItem } from './side-nav-item';
 import { usePathname } from 'next/navigation';
@@ -30,68 +27,20 @@ interface Item {
 
 const items: Item[] = [
   {
-    title: 'Components',
-    path: paths.components.index,
+    title: 'Homepage',
+    path: '/',
   },
   {
-    title: 'Pages',
-    children: [
-      {
-        subheader: 'Dashboard',
-        items: [
-          {
-            title: 'Overview',
-            path: paths.dashboard.index,
-          },
-          {
-            title: 'Customers',
-            path: paths.dashboard.customers.index,
-          },
-          {
-            title: 'Logistics',
-            path: paths.dashboard.logistics.index,
-          },
-          {
-            title: 'File Manager',
-            path: paths.dashboard.fileManager,
-          },
-          {
-            title: 'Academy',
-            path: paths.dashboard.academy.index,
-          },
-        ],
-      },
-      {
-        subheader: 'Other',
-        items: [
-          {
-            title: 'Blog',
-            path: paths.dashboard.blog.index,
-          },
-          {
-            title: 'Pricing',
-            path: paths.pricing,
-          },
-          {
-            title: 'Contact',
-            path: paths.contact,
-          },
-          {
-            title: 'Checkout',
-            path: paths.checkout,
-          },
-          {
-            title: 'Error',
-            path: paths.notFound,
-          },
-        ],
-      },
-    ],
+    title: 'Features',
+    path: '#features',
   },
   {
-    title: 'Docs',
-    path: paths.docs,
-    external: true,
+    title: 'Teams',
+    path: '#teams',
+  },
+  {
+    title: 'FAQ',
+    path: '#faq',
   },
 ];
 
@@ -180,7 +129,7 @@ const reduceChildRoutes = ({
                         target: '_blank',
                       }
                     : {
-                        component: RouterLink,
+                        component: NextLink,
                         href: item.path,
                       }
                   : {};
@@ -299,10 +248,10 @@ export const SideNav: FC<SideNavProps> = (props) => {
       >
         <Stack
           alignItems="center"
-          component={RouterLink}
+          component={NextLink}
           direction="row"
           display="inline-flex"
-          href={paths.index}
+          href="/"
           spacing={1}
           sx={{ textDecoration: 'none' }}
         >

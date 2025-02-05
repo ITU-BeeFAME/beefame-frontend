@@ -14,7 +14,7 @@ export const HomeHero: FC = () => {
       sx={{
         backgroundRepeat: 'no-repeat',
         backgroundPosition: 'top center',
-        backgroundImage: 'url("/assets/gradient-bg.svg")',
+        backgroundImage: 'url("/gradient-bg.svg")',
         pt: '100px',
       }}
     >
@@ -59,7 +59,7 @@ export const HomeHero: FC = () => {
                 mb: '-7px',
               }}
             >
-              <img src="/assets/hero.svg" />
+              <img src="/hero.svg" />
             </Box>
           </Grid>
         </Grid>

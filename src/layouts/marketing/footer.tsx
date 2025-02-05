@@ -1,8 +1,7 @@
 import { Box, Container, Typography, Stack, IconButton, Link } from '@mui/material';
 import { GitHub as GitHubIcon } from '@mui/icons-material';
 import { Logo } from 'src/components/logo';
-import { RouterLink } from 'src/components/router-link';
-import { paths } from 'src/paths';
+import NextLink from 'next/link';
 
 export const Footer = () => {
   const currentYear = new Date().getFullYear();
@@ -30,8 +29,8 @@ export const Footer = () => {
             alignItems="center"
           >
             <Box
-              component={RouterLink}
-              href={paths.index}
+              component={NextLink}
+              href={'paths.index'}
               sx={{
                 display: 'flex',
                 textDecoration: 'none',

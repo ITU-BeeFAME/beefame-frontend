@@ -9,8 +9,7 @@ import Paper from '@mui/material/Paper';
 import Portal from '@mui/material/Portal';
 import SvgIcon from '@mui/material/SvgIcon';
 import Typography from '@mui/material/Typography';
-
-import { RouterLink } from 'src/components/router-link';
+import NextLink from 'next/link';
 
 const TOP_NAV_HEIGHT = 64;
 const TOP_NAV_SPACE = 16;
@@ -127,7 +126,7 @@ export const TopNavItem: FC<TopNavItemProps> = (props) => {
           target: '_blank',
         }
       : {
-          component: RouterLink,
+          component: NextLink,
           href: path,
         }
     : {};

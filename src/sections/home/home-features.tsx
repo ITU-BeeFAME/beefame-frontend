@@ -22,25 +22,25 @@ const features: Feature[] = [
     id: 'fairness',
     title: 'Fairness Analysis',
     description: 'Uncover and measure biases in your AI models with precision.',
-    image: '/assets/feature1.svg',
+    image: '/feature1.svg',
   },
   {
     id: 'visual',
     title: 'Visual Insights',
     description: 'Gain clear, interactive visualizations of your fairness metrics.',
-    image: '/assets/feature2.svg',
+    image: '/feature2.svg',
   },
   {
     id: 'customize',
     title: 'Customizable Testing',
     description: 'Tailor fairness tests to match your specific use cases and datasets.',
-    image: '/assets/feature3.svg',
+    image: '/feature3.svg',
   },
   {
     id: 'recommendations',
     title: 'Actionable Recommendations',
     description: 'Receive insights and steps to improve the fairness of your AI models.',
-    image: '/assets/feature4.svg',
+    image: '/feature4.svg',
   },
 ];
 
@@ -56,7 +56,7 @@ export const HomeFeatures: FC = () => {
         backgroundColor: 'neutral.800',
         backgroundRepeat: 'no-repeat',
         backgroundPosition: 'top center',
-        backgroundImage: 'url("/assets/gradient-bg.svg")',
+        backgroundImage: 'url("/gradient-bg.svg")',
         color: 'common.white',
         pt: '50px',
       }}

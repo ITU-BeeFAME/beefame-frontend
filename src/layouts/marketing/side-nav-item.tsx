@@ -8,7 +8,7 @@ import ButtonBase from '@mui/material/ButtonBase';
 import Collapse from '@mui/material/Collapse';
 import SvgIcon from '@mui/material/SvgIcon';
 
-import { RouterLink } from 'src/components/router-link';
+import NextLink from 'next/link';
 
 interface SideNavItemProps {
   active?: boolean;
@@ -100,7 +100,7 @@ export const SideNavItem: FC<SideNavItemProps> = (props) => {
           target: '_blank',
         }
       : {
-          component: RouterLink,
+          component: NextLink,
           href: path,
         }
     : {};

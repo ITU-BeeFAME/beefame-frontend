@@ -6,10 +6,8 @@ import Typography from '@mui/material/Typography';
 import useMediaQuery from '@mui/material/useMediaQuery';
 import type { Theme } from '@mui/material/styles/createTheme';
 
-import { RouterLink } from 'src/components/router-link';
+import NextLink from 'next/link';
 import { Seo } from 'src/components/seo';
-
-import { paths } from 'src/paths';
 
 const Page: NextPage = () => {
   const mdUp = useMediaQuery((theme: Theme) => theme.breakpoints.down('md'));
@@ -37,7 +35,7 @@ const Page: NextPage = () => {
             <Box
               alt="Not found"
               component="img"
-              src="/assets/errors/error-404.png"
+              src="/error-404.png"
               sx={{
                 height: 'auto',
                 maxWidth: '100%',
@@ -67,8 +65,8 @@ const Page: NextPage = () => {
             }}
           >
             <Button
-              component={RouterLink}
-              href={paths.index}
+              component={NextLink}
+              href="/"
             >
               Back to Home
             </Button>

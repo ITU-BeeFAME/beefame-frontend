@@ -1,11 +1,8 @@
 import type { FC, ReactNode } from 'react';
-import { useCallback, useState } from 'react';
 import PropTypes from 'prop-types';
 import Menu01Icon from '@untitled-ui/icons-react/build/esm/Menu01';
-import { alpha } from '@mui/system/colorManipulator';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
-import Chip from '@mui/material/Chip';
 import Container from '@mui/material/Container';
 import IconButton from '@mui/material/IconButton';
 import Stack from '@mui/material/Stack';
@@ -14,10 +11,6 @@ import useMediaQuery from '@mui/material/useMediaQuery';
 import type { Theme } from '@mui/material/styles/createTheme';
 import NextLink from 'next/link';
 import { Logo } from 'src/components/logo';
-import { RouterLink } from 'src/components/router-link';
-import { version } from 'src/config';
-
-import { paths } from 'src/paths';
 import { TopNavItem } from './top-nav-item';
 import { usePathname } from 'next/navigation';
 
@@ -32,7 +25,7 @@ interface Item {
 const items: Item[] = [
   {
     title: 'Homepage',
-    path: paths.index,
+    path: '/',
   },
   {
     title: 'Features',
@@ -98,10 +91,10 @@ export const TopNav: FC<TopNavProps> = (props) => {
           >
             <Stack
               alignItems="center"
-              component={RouterLink}
+              component={NextLink}
               direction="row"
               display="inline-flex"
-              href={paths.index}
+              href="/"
               spacing={1}
               sx={{ textDecoration: 'none' }}
             >
