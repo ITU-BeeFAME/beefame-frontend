@@ -595,14 +595,14 @@ const MetricRadarChart = ({ metrics }: { metrics: BiasMetric[] }) => {
 };
 
 const SelectionSummary = ({
-  dataset,
-  classifier,
-  mitigation,
+  datasets,
+  classifiers,
+  mitigations,
   activeStep,
 }: {
-  dataset: Dataset | null;
-  classifier: Classifier | null;
-  mitigation: string;
+  datasets: Dataset[];
+  classifiers: Classifier[];
+  mitigations: string[];
   activeStep: number;
 }) => {
   if (activeStep === 0) return null;
@@ -620,7 +620,7 @@ const SelectionSummary = ({
       }}
     >
       <Stack spacing={1}>
-        {activeStep >= 1 && dataset && classifier && (
+        {activeStep >= 1 && datasets.length > 0 && classifiers.length > 0 && (
           <>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
               <DatasetOutlined sx={{ color: 'primary.main', fontSize: 20 }} />
@@ -628,7 +628,7 @@ const SelectionSummary = ({
                 variant="body2"
                 sx={{ fontWeight: 500 }}
               >
-                Dataset: {dataset.name}
+                Selected Datasets: {datasets.map((dataset) => dataset.name).join(', ')}
               </Typography>
             </Box>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -637,7 +637,7 @@ const SelectionSummary = ({
                 variant="body2"
                 sx={{ fontWeight: 500 }}
               >
-                Selected Classifier: {classifier.name}
+                Selected Classifiers: {classifiers.map((classifier) => classifier.name).join(', ')}
               </Typography>
             </Box>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -646,7 +646,7 @@ const SelectionSummary = ({
                 variant="body2"
                 sx={{ fontWeight: 500 }}
               >
-                Mitigation: {mitigation || 'None'}
+                Selected Mitigations: {mitigations.length > 0 ? mitigations.join(', ') : 'None'}
               </Typography>
             </Box>
           </>
@@ -658,9 +658,9 @@ const SelectionSummary = ({
 
 const Page: NextPage = () => {
   const [activeStep, setActiveStep] = useState(0);
-  const [selectedDataset, setSelectedDataset] = useState<Dataset | null>(null);
-  const [selectedClassifier, setSelectedClassifier] = useState<Classifier | null>(null);
-  const [selectedMitigation, setSelectedMitigation] = useState<string>('');
+  const [selectedDatasets, setSelectedDatasets] = useState<Dataset[]>([]);
+  const [selectedClassifiers, setSelectedClassifiers] = useState<Classifier[]>([]);
+  const [selectedMitigations, setSelectedMitigations] = useState<string[]>([]);
   const [datasets, setDatasets] = useState<Dataset[]>([]);
   const [classifiers, setClassifiers] = useState<Classifier[]>([]);
   const [mitigations, setMitigations] = useState<Mitigation[]>([]);
@@ -703,19 +703,22 @@ const Page: NextPage = () => {
   ];
 
   const handleNext = async () => {
-    if (activeStep === 0 && selectedDataset && selectedClassifier) {
+    if (activeStep === 0 && selectedDatasets.length > 0 && selectedClassifiers.length > 0) {
       setActiveStep((prevStep) => prevStep + 1);
       setAnalysisLoading(true);
       setAnalysisError(null);
       try {
         const response = await api.post<AnalysisResponse>('/analysis', {
-          dataset_names: [selectedDataset.slug],
-          classifier_names: [selectedClassifier.name],
+          dataset_names: selectedDatasets.map((dataset) => dataset.slug),
+          classifier_names: selectedClassifiers.map((classifier) => classifier.name),
         });
 
         // Transform API response to BiasSection format
         const transformedData: BiasSection[] = response.data.data.map((analysis) => {
-          const sensitiveFeature = selectedDataset.sensitive_features.find(
+          const dataset = selectedDatasets.find((d) =>
+            d.sensitive_features.some((f) => f.name === analysis['Sensitive Column'])
+          );
+          const sensitiveFeature = dataset?.sensitive_features.find(
             (feature) => feature.name === analysis['Sensitive Column']
           );
 
@@ -749,16 +752,15 @@ const Page: NextPage = () => {
       } finally {
         setAnalysisLoading(false);
       }
-    } else if (activeStep === 2 && selectedMitigation) {
+    } else if (activeStep === 2 && selectedMitigations.length > 0) {
       setActiveStep((prevStep) => prevStep + 1);
       setAnalysisLoading(true);
       setAnalysisError(null);
       try {
-        // Simulated API call to /evaluate endpoint
         const response = await api.post<AnalysisResponse>('/evaluation', {
-          dataset_names: [selectedDataset?.slug],
-          classifier_names: [selectedClassifier?.name],
-          method_names: [selectedMitigation],
+          dataset_names: selectedDatasets.map((dataset) => dataset.slug),
+          classifier_names: selectedClassifiers.map((classifier) => classifier.name),
+          method_names: selectedMitigations,
         });
 
         // Update existing analysis data with mitigation results
@@ -791,24 +793,45 @@ const Page: NextPage = () => {
   };
 
   const handleDatasetSelect = (dataset: Dataset) => {
-    setSelectedDataset(dataset);
+    setSelectedDatasets((prevDatasets) => {
+      const isSelected = prevDatasets.some((d) => d.id === dataset.id);
+      if (isSelected) {
+        return prevDatasets.filter((d) => d.id !== dataset.id);
+      } else {
+        return [...prevDatasets, dataset];
+      }
+    });
   };
 
   const handleClassifierSelect = (classifier: Classifier) => {
-    setSelectedClassifier(classifier);
+    setSelectedClassifiers((prevClassifiers) => {
+      const isSelected = prevClassifiers.some((c) => c.id === classifier.id);
+      if (isSelected) {
+        return prevClassifiers.filter((c) => c.id !== classifier.id);
+      } else {
+        return [...prevClassifiers, classifier];
+      }
+    });
   };
 
-  const handleMitigationChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setSelectedMitigation(event.target.value);
+  const handleMitigationSelect = (mitigation: string) => {
+    setSelectedMitigations((prevMitigations) => {
+      const isSelected = prevMitigations.includes(mitigation);
+      if (isSelected) {
+        return prevMitigations.filter((m) => m !== mitigation);
+      } else {
+        return [...prevMitigations, mitigation];
+      }
+    });
   };
 
   const renderStepContent = (step: number) => {
     return (
       <>
         <SelectionSummary
-          dataset={selectedDataset}
-          classifier={selectedClassifier}
-          mitigation={selectedMitigation}
+          datasets={selectedDatasets}
+          classifiers={selectedClassifiers}
+          mitigations={selectedMitigations}
           activeStep={activeStep}
         />
         {(() => {
@@ -874,14 +897,13 @@ const Page: NextPage = () => {
                                   cursor: 'pointer',
                                   borderWidth: 2,
                                   borderStyle: 'solid',
-                                  borderColor:
-                                    selectedDataset?.id === dataset.id
-                                      ? 'primary.main'
-                                      : 'transparent',
+                                  borderColor: selectedDatasets.some((d) => d.id === dataset.id)
+                                    ? 'primary.main'
+                                    : 'transparent',
                                   position: 'relative',
                                 }}
                               >
-                                {selectedDataset?.id === dataset.id && (
+                                {selectedDatasets.some((d) => d.id === dataset.id) && (
                                   <CheckCircleOutline
                                     sx={{
                                       position: 'absolute',
@@ -1019,129 +1041,116 @@ const Page: NextPage = () => {
                         </Typography>
                         <Paper sx={{ p: 2, bgcolor: 'background.default' }}>
                           <FormControl sx={{ width: '100%' }}>
-                            <RadioGroup
-                              value={selectedClassifier?.id || ''}
-                              onChange={(e) => {
-                                const selected = classifiers.find((c) => c.id === +e.target.value);
-                                if (selected) handleClassifierSelect(selected);
-                              }}
+                            <Grid
+                              container
+                              spacing={2}
                             >
-                              <Grid
-                                container
-                                spacing={2}
-                              >
-                                {classifiers.map((classifier) => (
-                                  <Grid
-                                    item
-                                    xs={12}
-                                    md={6}
-                                    key={classifier.id}
+                              {classifiers.map((classifier) => (
+                                <Grid
+                                  item
+                                  xs={12}
+                                  md={6}
+                                  key={classifier.id}
+                                >
+                                  <Paper
+                                    elevation={0}
+                                    onClick={() => handleClassifierSelect(classifier)}
+                                    sx={{
+                                      p: 1.5,
+                                      borderRadius: 1,
+                                      border: '1px solid',
+                                      borderColor: selectedClassifiers.some(
+                                        (c) => c.id === classifier.id
+                                      )
+                                        ? 'primary.main'
+                                        : 'divider',
+                                      bgcolor: 'background.paper',
+                                      transition: 'all 0.2s',
+                                      height: '100%',
+                                      cursor: 'pointer',
+                                      '&:hover': {
+                                        borderColor: 'primary.main',
+                                        bgcolor: 'grey.50',
+                                      },
+                                    }}
                                   >
-                                    <Paper
-                                      elevation={0}
-                                      sx={{
-                                        p: 1.5,
-                                        borderRadius: 1,
-                                        border: '1px solid',
-                                        borderColor:
-                                          selectedClassifier?.id === classifier.id
-                                            ? 'primary.main'
-                                            : 'divider',
-                                        bgcolor: 'background.paper',
-                                        transition: 'all 0.2s',
-                                        height: '100%',
-                                        '&:hover': {
-                                          borderColor: 'primary.main',
-                                          bgcolor: 'grey.50',
-                                        },
-                                      }}
+                                    <Stack
+                                      direction="row"
+                                      alignItems="center"
+                                      spacing={2}
+                                      sx={{ width: '100%' }}
                                     >
-                                      <FormControlLabel
-                                        value={classifier.id}
-                                        control={
-                                          <Radio
-                                            sx={{
-                                              color: 'primary.main',
-                                              '&.Mui-checked': {
-                                                color: 'primary.main',
+                                      <Box
+                                        sx={{ display: 'flex', alignItems: 'center', flexGrow: 1 }}
+                                      >
+                                        <ScienceOutlined
+                                          sx={{
+                                            mr: 1,
+                                            color: selectedClassifiers.some(
+                                              (c) => c.id === classifier.id
+                                            )
+                                              ? 'primary.main'
+                                              : 'text.secondary',
+                                          }}
+                                        />
+                                        <Typography
+                                          sx={{
+                                            fontWeight: selectedClassifiers.some(
+                                              (c) => c.id === classifier.id
+                                            )
+                                              ? 600
+                                              : 400,
+                                            color: selectedClassifiers.some(
+                                              (c) => c.id === classifier.id
+                                            )
+                                              ? 'primary.main'
+                                              : 'text.primary',
+                                          }}
+                                        >
+                                          {classifier.name}
+                                        </Typography>
+                                      </Box>
+                                      <Link
+                                        href={classifier.url}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        onClick={(e) => e.stopPropagation()}
+                                        sx={{ textDecoration: 'none' }}
+                                      >
+                                        <Chip
+                                          label="Documentation"
+                                          size="small"
+                                          variant="outlined"
+                                          color={
+                                            selectedClassifiers.some((c) => c.id === classifier.id)
+                                              ? 'primary'
+                                              : 'default'
+                                          }
+                                          sx={{
+                                            height: 24,
+                                            '&:hover': {
+                                              bgcolor: 'primary.main',
+                                              color: 'white',
+                                              '& .MuiChip-label': {
+                                                color: 'white',
                                               },
-                                            }}
-                                          />
-                                        }
-                                        label={
-                                          <Stack
-                                            direction="row"
-                                            alignItems="center"
-                                            spacing={2}
-                                          >
-                                            <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                              <ScienceOutlined
-                                                sx={{
-                                                  mr: 1,
-                                                  color:
-                                                    selectedClassifier?.id === classifier.id
-                                                      ? 'primary.main'
-                                                      : 'text.secondary',
-                                                }}
-                                              />
-                                              <Typography
-                                                sx={{
-                                                  fontWeight:
-                                                    selectedClassifier?.id === classifier.id
-                                                      ? 600
-                                                      : 400,
-                                                  color:
-                                                    selectedClassifier?.id === classifier.id
-                                                      ? 'primary.main'
-                                                      : 'text.primary',
-                                                }}
-                                              >
-                                                {classifier.name}
-                                              </Typography>
-                                            </Box>
-                                            <Link
-                                              href={classifier.url}
-                                              target="_blank"
-                                              rel="noopener noreferrer"
-                                              onClick={(e) => e.stopPropagation()}
-                                              sx={{ ml: 'auto !important', textDecoration: 'none' }}
-                                            >
-                                              <Chip
-                                                label="Documentation"
-                                                size="small"
-                                                variant="outlined"
-                                                color={
-                                                  selectedClassifier?.id === classifier.id
-                                                    ? 'primary'
-                                                    : 'default'
-                                                }
-                                                sx={{
-                                                  height: 24,
-                                                  '&:hover': {
-                                                    bgcolor: 'primary.main',
-                                                    color: 'white',
-                                                    '& .MuiChip-label': {
-                                                      color: 'white',
-                                                    },
-                                                  },
-                                                }}
-                                              />
-                                            </Link>
-                                          </Stack>
-                                        }
-                                        sx={{
-                                          mx: 0,
-                                          width: '100%',
-                                          '& .MuiFormControlLabel-label': {
-                                            width: '100%',
-                                          },
-                                        }}
-                                      />
-                                    </Paper>
-                                  </Grid>
-                                ))}
-                              </Grid>
-                            </RadioGroup>
+                                            },
+                                          }}
+                                        />
+                                      </Link>
+                                      {selectedClassifiers.some((c) => c.id === classifier.id) && (
+                                        <CheckCircleOutline
+                                          sx={{
+                                            color: 'primary.main',
+                                            fontSize: 20,
+                                          }}
+                                        />
+                                      )}
+                                    </Stack>
+                                  </Paper>
+                                </Grid>
+                              ))}
+                            </Grid>
                           </FormControl>
                         </Paper>
                       </>
@@ -1348,89 +1357,99 @@ const Page: NextPage = () => {
                     </Alert>
                   ) : (
                     <FormControl>
-                      <RadioGroup
-                        value={selectedMitigation}
-                        onChange={handleMitigationChange}
-                      >
-                        <Stack spacing={2}>
-                          {mitigations.map((mitigation) => (
-                            <Paper
-                              key={mitigation.id}
-                              elevation={0}
-                              sx={{
-                                p: 3,
-                                borderRadius: 2,
-                                bgcolor: 'background.default',
-                                border: '1px solid',
-                                borderColor:
-                                  selectedMitigation === mitigation.id ? 'primary.main' : 'divider',
-                                transition: 'all 0.3s ease-in-out',
-                                '&:hover': {
-                                  borderColor: 'primary.main',
-                                  boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
-                                },
-                              }}
-                            >
-                              <FormControlLabel
-                                value={mitigation.name}
-                                control={
-                                  <Radio
+                      <Stack spacing={2}>
+                        {mitigations.map((mitigation) => (
+                          <Paper
+                            key={mitigation.id}
+                            elevation={0}
+                            onClick={() => handleMitigationSelect(mitigation.name)}
+                            sx={{
+                              p: 3,
+                              borderRadius: 2,
+                              bgcolor: 'background.default',
+                              border: '1px solid',
+                              borderColor: selectedMitigations.includes(mitigation.name)
+                                ? 'primary.main'
+                                : 'divider',
+                              transition: 'all 0.3s ease-in-out',
+                              cursor: 'pointer',
+                              '&:hover': {
+                                borderColor: 'primary.main',
+                                boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
+                              },
+                            }}
+                          >
+                            <Box sx={{ ml: 1 }}>
+                              <Stack
+                                direction="row"
+                                alignItems="center"
+                                spacing={2}
+                                sx={{ width: '100%' }}
+                              >
+                                <Box sx={{ flexGrow: 1 }}>
+                                  <Typography
+                                    variant="h6"
+                                    sx={{
+                                      fontWeight: selectedMitigations.includes(mitigation.name)
+                                        ? 600
+                                        : 500,
+                                      mb: 1,
+                                      color: selectedMitigations.includes(mitigation.name)
+                                        ? 'primary.main'
+                                        : 'text.primary',
+                                    }}
+                                  >
+                                    {mitigation.name}
+                                  </Typography>
+                                  <Typography color="text.secondary">
+                                    {mitigation.description}
+                                  </Typography>
+                                </Box>
+                                {selectedMitigations.includes(mitigation.name) && (
+                                  <CheckCircleOutline
                                     sx={{
                                       color: 'primary.main',
-                                      '&.Mui-checked': {
-                                        color: 'primary.main',
-                                      },
+                                      fontSize: 24,
                                     }}
                                   />
-                                }
-                                label={
-                                  <Box sx={{ ml: 1 }}>
-                                    <Typography
-                                      variant="h6"
-                                      sx={{ fontWeight: 600, mb: 1 }}
-                                    >
-                                      {mitigation.name}
-                                    </Typography>
-                                    <Stack spacing={2}>
-                                      <Typography color="text.secondary">
-                                        {mitigation.description}
-                                      </Typography>
-                                      <Box sx={{ display: 'flex', gap: 1 }}>
-                                        <Chip
-                                          label={mitigation.type}
-                                          size="small"
-                                          color="primary"
-                                          sx={{ fontWeight: 500 }}
-                                        />
-                                        <Link
-                                          href={mitigation.url}
-                                          target="_blank"
-                                          rel="noopener noreferrer"
-                                          sx={{ textDecoration: 'none' }}
-                                        >
-                                          <Chip
-                                            label="View Implementation"
-                                            size="small"
-                                            color="primary"
-                                            variant="outlined"
-                                            clickable
-                                            sx={{ fontWeight: 500 }}
-                                          />
-                                        </Link>
-                                      </Box>
-                                    </Stack>
-                                  </Box>
-                                }
-                                sx={{
-                                  margin: 0,
-                                  width: '100%',
-                                  alignItems: 'flex-start',
-                                }}
-                              />
-                            </Paper>
-                          ))}
-                        </Stack>
-                      </RadioGroup>
+                                )}
+                              </Stack>
+                              <Box sx={{ display: 'flex', gap: 1, mt: 2 }}>
+                                <Chip
+                                  label={mitigation.type}
+                                  size="small"
+                                  color={
+                                    selectedMitigations.includes(mitigation.name)
+                                      ? 'primary'
+                                      : 'default'
+                                  }
+                                  sx={{ fontWeight: 500 }}
+                                />
+                                <Link
+                                  href={mitigation.url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  onClick={(e) => e.stopPropagation()}
+                                  sx={{ textDecoration: 'none' }}
+                                >
+                                  <Chip
+                                    label="View Implementation"
+                                    size="small"
+                                    color={
+                                      selectedMitigations.includes(mitigation.name)
+                                        ? 'primary'
+                                        : 'default'
+                                    }
+                                    variant="outlined"
+                                    clickable
+                                    sx={{ fontWeight: 500 }}
+                                  />
+                                </Link>
+                              </Box>
+                            </Box>
+                          </Paper>
+                        ))}
+                      </Stack>
                     </FormControl>
                   )}
                 </Stack>
@@ -1710,8 +1729,9 @@ const Page: NextPage = () => {
                   variant="contained"
                   onClick={handleNext}
                   disabled={
-                    (activeStep === 0 && (!selectedDataset || !selectedClassifier)) ||
-                    (activeStep === 2 && !selectedMitigation)
+                    (activeStep === 0 &&
+                      (selectedDatasets.length === 0 || selectedClassifiers.length === 0)) ||
+                    (activeStep === 2 && selectedMitigations.length === 0)
                   }
                   size="large"
                 >
