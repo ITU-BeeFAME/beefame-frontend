@@ -7,8 +7,6 @@ import { useTheme } from '@mui/material/styles';
 import Grid from '@mui/system/Unstable_Grid';
 
 export const HomeHero: FC = () => {
-  const theme = useTheme();
-
   return (
     <Box
       sx={{
