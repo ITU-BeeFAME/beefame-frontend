@@ -81,6 +81,9 @@ interface BiasMetric {
 }
 
 interface BiasAnalysis {
+  'Method Name': string;
+  Dataset: string;
+  'Dataset Name': string;
   'Sensitive Column': string;
   'Model Accuracy': number;
   'Statistical Parity Difference': number;
@@ -96,6 +99,8 @@ interface ChartDataItem {
 }
 
 interface BiasSection {
+  datasetName?: string;
+  methodName?: string;
   protectedAttribute: string;
   privilegedGroup: string;
   unprivilegedGroup: string;
@@ -467,15 +472,15 @@ const MetricRadarChart = ({ metrics }: { metrics: BiasMetric[] }) => {
   // Transform data for radar chart
   const data = metrics.map((metric) => ({
     name: metric.name.replace(/([A-Z])/g, ' $1').trim(), // Add spaces before capital letters
-    original: 1 - Math.abs(metric.value),
-    mitigated: metric.mitigatedValue ? 1 - Math.abs(metric.mitigatedValue) : undefined,
+    original: Math.abs(metric.value).toFixed(2),
+    mitigated: metric.mitigatedValue ? Math.abs(metric.mitigatedValue).toFixed(2) : undefined,
   }));
 
   return (
     <Box
       sx={{
         width: '100%',
-        height: 400,
+        height: 500,
         p: 2,
         borderRadius: 2,
         bgcolor: 'background.paper',
@@ -579,7 +584,7 @@ const MetricRadarChart = ({ metrics }: { metrics: BiasMetric[] }) => {
             />
           )}
           <Tooltip
-            formatter={(value: number) => [value.toFixed(3)]}
+            /* formatter={(value: number) => [value?.toFixed(3)]} */
             contentStyle={{
               background: '#fff',
               border: 'none',
@@ -724,19 +729,23 @@ const Page: NextPage = () => {
 
           const metrics: BiasMetric[] = [
             {
-              name: 'Statistical Parity Difference',
-              value: analysis['Statistical Parity Difference'],
+              name: 'Statistical Parity Difference (1-m)',
+              value: 1 - analysis['Statistical Parity Difference'],
             },
             {
-              name: 'Equal Opportunity Difference',
-              value: analysis['Equal Opportunity Difference'],
+              name: 'Equal Opportunity Difference (1-m)',
+              value: 1 - analysis['Equal Opportunity Difference'],
             },
-            { name: 'Average Odds Difference', value: analysis['Average Odds Difference'] },
-            { name: 'Disparate Impact', value: analysis['Disparate Impact'] },
-            { name: 'Theil Index', value: analysis['Theil Index'] },
+            {
+              name: 'Average Odds Difference (1-m)',
+              value: 1 - analysis['Average Odds Difference'],
+            },
+            { name: 'Disparate Impact (m)', value: analysis['Disparate Impact'] },
+            { name: 'Theil Index (1-m)', value: 1 - analysis['Theil Index'] },
           ];
 
           return {
+            datasetName: analysis?.Dataset,
             protectedAttribute: analysis['Sensitive Column'],
             privilegedGroup: sensitiveFeature?.privileged || '',
             unprivilegedGroup: sensitiveFeature?.unprivileged || '',
@@ -765,18 +774,57 @@ const Page: NextPage = () => {
 
         // Update existing analysis data with mitigation results
         const updatedData = analysisData.map((section, index) => {
-          const mitigatedAnalysis = response.data.data[index];
-          return {
-            ...section,
-            mitigatedAccuracy: mitigatedAnalysis['Model Accuracy'] * 100,
-            metrics: section.metrics.map((metric) => ({
-              ...metric,
-              mitigatedValue: mitigatedAnalysis[metric.name as keyof BiasAnalysis] as number,
-            })),
-          };
-        });
+          console.log('section : ', section);
+          console.log('index : ', index);
+          const mitigatedResult = response.data.data;
+          const mitigatedForSection = mitigatedResult.filter(
+            (mItem) =>
+              mItem['Dataset Name'] === section.datasetName &&
+              mItem['Sensitive Column'] === section.protectedAttribute
+          );
 
-        setAnalysisData(updatedData);
+          console.log('mitigatedForSection :', mitigatedForSection);
+
+          const manipulatedMitigated = mitigatedForSection.map((item) => {
+            const mitigatedValues: BiasMetric[] = [
+              {
+                name: 'Statistical Parity Difference (1-m)',
+                value: 1 - item['Statistical Parity Difference'],
+              },
+              {
+                name: 'Equal Opportunity Difference (1-m)',
+                value: 1 - item['Equal Opportunity Difference'],
+              },
+              {
+                name: 'Average Odds Difference (1-m)',
+                value: 1 - item['Average Odds Difference'],
+              },
+              { name: 'Disparate Impact (m)', value: item['Disparate Impact'] },
+              { name: 'Theil Index (1-m)', value: 1 - item['Theil Index'] },
+            ];
+            return {
+              ...section,
+              methodName: item['Method Name'],
+              mitigatedAccuracy: item['Model Accuracy'] * 100,
+              metrics: section.metrics.map((metric) => ({
+                ...metric,
+                mitigatedValue: mitigatedValues.find((mValue) => mValue.name === metric.name)
+                  ?.value,
+              })) as BiasMetric[],
+            };
+          });
+
+          console.log('manipulatedMitigated : ', manipulatedMitigated);
+
+          return manipulatedMitigated;
+        });
+        // TO DO: Fix it nested array proble
+        setAnalysisData(updatedData.flatMap((data) => data));
+
+        console.log(
+          'updated Data : ',
+          updatedData.flatMap((data) => data)
+        );
       } catch (err) {
         setAnalysisError('Failed to apply mitigation. Please try again.');
         console.error('Error applying mitigation:', err);
@@ -1183,7 +1231,8 @@ const Page: NextPage = () => {
                         variant="body2"
                         color="text.secondary"
                       >
-                        This may take a few minutes
+                        It may take up to 10 minutes, depending on your dataset and classifier
+                        choice.
                       </Typography>
                     </Box>
                   ) : analysisError ? (
@@ -1218,12 +1267,19 @@ const Page: NextPage = () => {
                           key={index}
                           elevation={0}
                         >
+                          <Typography
+                            variant="h5"
+                            sx={{ color: 'primary.main', fontWeight: 600, mb: 1 }}
+                          >
+                            {selectedDatasets.find((ds) => ds.slug === section.datasetName)?.name}
+                          </Typography>
                           <Stack spacing={3}>
                             <Box>
                               <Typography
                                 variant="h6"
                                 gutterBottom
-                                sx={{ color: 'primary.main', fontWeight: 600 }}
+                                color="text.secondary"
+                                sx={{ fontWeight: 600 }}
                               >
                                 Protected Attribute: {section.protectedAttribute}
                               </Typography>
@@ -1489,7 +1545,8 @@ const Page: NextPage = () => {
                         variant="body2"
                         color="text.secondary"
                       >
-                        This may take a few minutes
+                        It may take up to 10 minutes, depending on your dataset and classifier
+                        choice.
                       </Typography>
                     </Box>
                   ) : analysisError ? (
@@ -1528,9 +1585,24 @@ const Page: NextPage = () => {
                           <Stack spacing={3}>
                             <Box>
                               <Typography
+                                variant="h5"
+                                sx={{ color: 'primary.main', fontWeight: 600, mb: 1 }}
+                              >
+                                {
+                                  selectedDatasets.find((ds) => ds.slug === section.datasetName)
+                                    ?.name
+                                }{' '}
+                                <Chip
+                                  size="small"
+                                  sx={{ ml: 1 }}
+                                  label={section.methodName}
+                                />
+                              </Typography>
+                              <Typography
                                 variant="h6"
                                 gutterBottom
-                                sx={{ color: 'primary.main', fontWeight: 600 }}
+                                color="text.secondary"
+                                sx={{ fontWeight: 600 }}
                               >
                                 Protected Attribute: {section.protectedAttribute}
                               </Typography>
@@ -1565,25 +1637,25 @@ const Page: NextPage = () => {
                               </Grid>
                             </Box>
 
-                            <Alert
-                              severity={
-                                section.biasedMetricsCount && section.biasedMetricsCount > 0
-                                  ? 'warning'
-                                  : 'success'
-                              }
-                              icon={<ErrorOutline />}
-                              sx={{
-                                borderRadius: 2,
-                                '& .MuiAlert-icon': {
-                                  alignItems: 'center',
-                                },
-                              }}
-                            >
-                              <Stack spacing={1}>
-                                <Typography variant="body2">
-                                  Original Accuracy: {section.accuracy.toFixed(1)}%
-                                </Typography>
-                                {section.mitigatedAccuracy && (
+                            {section.mitigatedAccuracy && (
+                              <Alert
+                                severity={
+                                  section.mitigatedAccuracy >= section.accuracy
+                                    ? 'success'
+                                    : 'warning'
+                                }
+                                icon={<ErrorOutline />}
+                                sx={{
+                                  borderRadius: 2,
+                                  '& .MuiAlert-icon': {
+                                    alignItems: 'center',
+                                  },
+                                }}
+                              >
+                                <Stack spacing={1}>
+                                  <Typography variant="body2">
+                                    Original Accuracy: {section.accuracy.toFixed(1)}%
+                                  </Typography>
                                   <Typography variant="body2">
                                     Accuracy after mitigation:{' '}
                                     {section.mitigatedAccuracy.toFixed(1)}%{' '}
@@ -1597,22 +1669,23 @@ const Page: NextPage = () => {
                                       sx={{ fontWeight: 500 }}
                                     >
                                       ({section.mitigatedAccuracy >= section.accuracy ? '+' : ''}
-                                      {(section.mitigatedAccuracy - section.accuracy).toFixed(1)}%)
+                                      {(section.mitigatedAccuracy - section.accuracy).toFixed(1)}
+                                      %)
                                     </Typography>
                                   </Typography>
-                                )}
-                                {section.biasedMetricsCount !== undefined &&
-                                  section.totalMetrics !== undefined && (
-                                    <Typography variant="body2">
-                                      With mitigation applied, bias detected in{' '}
-                                      <strong>
-                                        {section.biasedMetricsCount} out of {section.totalMetrics}
-                                      </strong>{' '}
-                                      metrics
-                                    </Typography>
-                                  )}
-                              </Stack>
-                            </Alert>
+                                  {section.biasedMetricsCount !== undefined &&
+                                    section.totalMetrics !== undefined && (
+                                      <Typography variant="body2">
+                                        With mitigation applied, bias detected in{' '}
+                                        <strong>
+                                          {section.biasedMetricsCount} out of {section.totalMetrics}
+                                        </strong>{' '}
+                                        metrics
+                                      </Typography>
+                                    )}
+                                </Stack>
+                              </Alert>
+                            )}
 
                             <Grid
                               container
