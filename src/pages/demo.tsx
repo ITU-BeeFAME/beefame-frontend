@@ -7,7 +7,6 @@ import {
   Card,
   CardContent,
   Typography,
-  Grid,
   Button,
   Paper,
   Container,
@@ -16,12 +15,10 @@ import {
   Link,
   Stack,
   Alert,
-  Radio,
-  RadioGroup,
-  FormControlLabel,
   FormControl,
   CircularProgress,
 } from '@mui/material';
+import Grid from '@mui/material/Unstable_Grid2';
 import {
   ScienceOutlined,
   DatasetOutlined,
@@ -82,6 +79,7 @@ interface BiasMetric {
 
 interface BiasAnalysis {
   'Method Name': string;
+  Classifier: string;
   Dataset: string;
   'Dataset Name': string;
   'Sensitive Column': string;
@@ -102,6 +100,7 @@ interface BiasSection {
   datasetName?: string;
   methodName?: string;
   protectedAttribute: string;
+  classifierName?: string;
   privilegedGroup: string;
   unprivilegedGroup: string;
   accuracy: number;
@@ -480,13 +479,15 @@ const MetricRadarChart = ({ metrics }: { metrics: BiasMetric[] }) => {
     <Box
       sx={{
         width: '100%',
-        height: 500,
+        height: 300,
         p: 2,
         borderRadius: 2,
         bgcolor: 'background.paper',
         border: '1px solid',
         borderColor: 'divider',
         transition: 'all 0.2s ease-in-out',
+        mb: 2,
+        pb: 4,
       }}
     >
       <Typography
@@ -549,7 +550,7 @@ const MetricRadarChart = ({ metrics }: { metrics: BiasMetric[] }) => {
       </Box>
       <ResponsiveContainer
         width="100%"
-        height="100%"
+        height="85%"
       >
         <RadarChart
           cx="50%"
@@ -746,6 +747,7 @@ const Page: NextPage = () => {
 
           return {
             datasetName: analysis?.Dataset,
+            classifierName: analysis['Classifier'],
             protectedAttribute: analysis['Sensitive Column'],
             privilegedGroup: sensitiveFeature?.privileged || '',
             unprivilegedGroup: sensitiveFeature?.unprivileged || '',
@@ -934,7 +936,6 @@ const Page: NextPage = () => {
                         >
                           {datasets.map((dataset) => (
                             <Grid
-                              item
                               xs={12}
                               md={6}
                               key={dataset.id}
@@ -1095,7 +1096,6 @@ const Page: NextPage = () => {
                             >
                               {classifiers.map((classifier) => (
                                 <Grid
-                                  item
                                   xs={12}
                                   md={6}
                                   key={classifier.id}
@@ -1255,123 +1255,122 @@ const Page: NextPage = () => {
                       <Box>
                         <Typography
                           variant="h5"
-                          gutterBottom
                           sx={{ fontWeight: 600 }}
                         >
                           Check bias metrics
                         </Typography>
                       </Box>
-
-                      {analysisData.map((section, index) => (
-                        <Paper
-                          key={index}
-                          elevation={0}
-                        >
-                          <Typography
-                            variant="h5"
-                            sx={{ color: 'primary.main', fontWeight: 600, mb: 1 }}
+                      <Grid
+                        container
+                        spacing={2}
+                      >
+                        {analysisData.map((section, index) => (
+                          <Grid
+                            key={index}
+                            xs={6}
                           >
-                            {selectedDatasets.find((ds) => ds.slug === section.datasetName)?.name}
-                          </Typography>
-                          <Stack spacing={3}>
-                            <Box>
-                              <Typography
-                                variant="h6"
-                                gutterBottom
-                                color="text.secondary"
-                                sx={{ fontWeight: 600 }}
-                              >
-                                Protected Attribute: {section.protectedAttribute}
-                              </Typography>
-                              <Grid
-                                container
-                                spacing={2}
-                              >
-                                <Grid
-                                  item
-                                  xs={12}
-                                  sm={6}
-                                >
-                                  <Typography
-                                    variant="body2"
-                                    color="text.secondary"
-                                  >
-                                    <strong>Privileged Group:</strong> {section.privilegedGroup}
-                                  </Typography>
-                                </Grid>
-                                <Grid
-                                  item
-                                  xs={12}
-                                  sm={6}
-                                >
-                                  <Typography
-                                    variant="body2"
-                                    color="text.secondary"
-                                  >
-                                    <strong>Unprivileged Group:</strong> {section.unprivilegedGroup}
-                                  </Typography>
-                                </Grid>
-                              </Grid>
-                            </Box>
-
-                            <Alert
-                              severity="info"
-                              icon={<ErrorOutline />}
+                            <Card
                               sx={{
+                                border: '1px solid transparent',
+                                borderColor: 'divider',
                                 borderRadius: 2,
-                                '& .MuiAlert-icon': {
-                                  alignItems: 'center',
-                                },
+                                py: 3,
+                                px: 2,
                               }}
                             >
-                              <Typography variant="body2">
-                                Model Accuracy: {section.accuracy.toFixed(1)}%
-                              </Typography>
-                            </Alert>
-
-                            <Grid
-                              container
-                              spacing={3}
-                            >
-                              {/* {section.metrics.map((metric, idx) => (
-                                <Grid
-                                  item
-                                  xs={12}
-                                  key={idx}
-                                >
-                                  <Stack spacing={3}>
-                                    <Grid
-                                      container
-                                      spacing={3}
-                                    >
-                                      <Grid
-                                        item
-                                        xs={12}
-                                        md={6}
-                                      >
-                                        <MetricChart metric={metric} />
-                                      </Grid>
-                                      <Grid
-                                        item
-                                        xs={12}
-                                        md={6}
-                                      >
-                                        <MetricLineChart metric={metric} />
-                                      </Grid>
-                                    </Grid>
-                                  </Stack>
-                                </Grid>
-                              ))} */}
-                              <Grid
-                                item
-                                xs={12}
+                              <Typography
+                                variant="h6"
+                                sx={{ color: 'primary.main', fontWeight: 600, mb: 1 }}
                               >
-                                <MetricRadarChart metrics={section.metrics} />
-                              </Grid>
-                            </Grid>
-                          </Stack>
-                        </Paper>
-                      ))}
+                                {
+                                  selectedDatasets.find((ds) => ds.slug === section.datasetName)
+                                    ?.name
+                                }
+                              </Typography>
+                              <Stack spacing={3}>
+                                <Box>
+                                  <Grid
+                                    container
+                                    spacing={2}
+                                  >
+                                    <Grid
+                                      xs={12}
+                                      sm={12}
+                                    >
+                                      <Typography
+                                        variant="body2"
+                                        color="text.secondary"
+                                        sx={{ fontWeight: 600 }}
+                                      >
+                                        Protected Attribute: {section.protectedAttribute}
+                                      </Typography>
+                                      <Typography
+                                        variant="body2"
+                                        color="text.secondary"
+                                      >
+                                        <strong>Classifier: </strong> {section.classifierName}
+                                      </Typography>
+                                    </Grid>
+                                  </Grid>
+
+                                  <Grid
+                                    container
+                                    spacing={2}
+                                  >
+                                    <Grid
+                                      xs={12}
+                                      sm={6}
+                                    >
+                                      <Typography
+                                        variant="body2"
+                                        color="text.secondary"
+                                      >
+                                        <strong>Privileged Group:</strong> {section.privilegedGroup}
+                                      </Typography>
+                                    </Grid>
+                                    <Grid
+                                      xs={12}
+                                      sm={6}
+                                    >
+                                      <Typography
+                                        variant="body2"
+                                        color="text.secondary"
+                                      >
+                                        <strong>Unprivileged Group:</strong>{' '}
+                                        {section.unprivilegedGroup}
+                                      </Typography>
+                                    </Grid>
+                                  </Grid>
+                                </Box>
+
+                                <Alert
+                                  severity="info"
+                                  icon={<ErrorOutline />}
+                                  sx={{
+                                    borderRadius: 2,
+                                    '& .MuiAlert-icon': {
+                                      alignItems: 'center',
+                                    },
+                                  }}
+                                >
+                                  <Typography variant="body2">
+                                    Model Accuracy: {section.accuracy.toFixed(1)}%
+                                  </Typography>
+                                </Alert>
+
+                                <Grid
+                                  container
+                                  spacing={3}
+                                >
+                                  <Grid xs={12}>
+                                    <MetricRadarChart metrics={section.metrics} />
+                                  </Grid>
+                                </Grid>
+                              </Stack>
+                            </Card>
+                          </Grid>
+                        ))}
+                      </Grid>
                     </>
                   )}
                 </Stack>
@@ -1516,7 +1515,6 @@ const Page: NextPage = () => {
                   <Box>
                     <Typography
                       variant="h5"
-                      gutterBottom
                       sx={{ fontWeight: 600 }}
                     >
                       Review Mitigation Results
@@ -1569,129 +1567,134 @@ const Page: NextPage = () => {
                       {analysisError}
                     </Alert>
                   ) : (
-                    <>
+                    <Grid
+                      container
+                      spacing={2}
+                    >
                       {analysisData.map((section, index) => (
-                        <Paper
+                        <Grid
+                          xs={6}
                           key={index}
-                          elevation={0}
-                          sx={{
-                            p: 3,
-                            borderRadius: 2,
-                            bgcolor: 'background.default',
-                            border: '1px solid',
-                            borderColor: 'divider',
-                          }}
                         >
-                          <Stack spacing={3}>
-                            <Box>
-                              <Typography
-                                variant="h5"
-                                sx={{ color: 'primary.main', fontWeight: 600, mb: 1 }}
-                              >
-                                {
-                                  selectedDatasets.find((ds) => ds.slug === section.datasetName)
-                                    ?.name
-                                }{' '}
-                                <Chip
-                                  size="small"
-                                  sx={{ ml: 1 }}
-                                  label={section.methodName}
-                                />
-                              </Typography>
-                              <Typography
-                                variant="h6"
-                                gutterBottom
-                                color="text.secondary"
-                                sx={{ fontWeight: 600 }}
-                              >
-                                Protected Attribute: {section.protectedAttribute}
-                              </Typography>
+                          <Card
+                            sx={{
+                              border: '1px solid transparent',
+                              borderColor: 'divider',
+                              borderRadius: 2,
+                              py: 3,
+                              px: 2,
+                            }}
+                          >
+                            <Stack spacing={3}>
+                              <Box>
+                                <Typography
+                                  variant="h6"
+                                  sx={{ color: 'primary.main', fontWeight: 600, mb: 1 }}
+                                >
+                                  {
+                                    selectedDatasets.find((ds) => ds.slug === section.datasetName)
+                                      ?.name
+                                  }{' '}
+                                  <Chip
+                                    size="small"
+                                    sx={{ ml: 1 }}
+                                    label={section.methodName}
+                                  />
+                                </Typography>
+                                <Typography
+                                  variant="body2"
+                                  gutterBottom
+                                  color="text.secondary"
+                                  sx={{ fontWeight: 600 }}
+                                >
+                                  Protected Attribute: {section.protectedAttribute}
+                                </Typography>
+                                <Grid
+                                  container
+                                  spacing={2}
+                                >
+                                  <Grid
+                                    xs={12}
+                                    sm={6}
+                                  >
+                                    <Typography
+                                      variant="body2"
+                                      color="text.secondary"
+                                    >
+                                      <strong>Privileged Group:</strong> {section.privilegedGroup}
+                                    </Typography>
+                                  </Grid>
+                                  <Grid
+                                    xs={12}
+                                    sm={6}
+                                  >
+                                    <Typography
+                                      variant="body2"
+                                      color="text.secondary"
+                                    >
+                                      <strong>Unprivileged Group:</strong>{' '}
+                                      {section.unprivilegedGroup}
+                                    </Typography>
+                                  </Grid>
+                                </Grid>
+                              </Box>
+
+                              {section.mitigatedAccuracy && (
+                                <Alert
+                                  severity={
+                                    section.mitigatedAccuracy >= section.accuracy
+                                      ? 'success'
+                                      : 'warning'
+                                  }
+                                  icon={<ErrorOutline />}
+                                  sx={{
+                                    borderRadius: 2,
+                                    '& .MuiAlert-icon': {
+                                      alignItems: 'center',
+                                    },
+                                  }}
+                                >
+                                  <Stack spacing={1}>
+                                    <Typography variant="body2">
+                                      Original Accuracy: {section.accuracy.toFixed(1)}%
+                                    </Typography>
+                                    <Typography variant="body2">
+                                      Accuracy after mitigation:{' '}
+                                      {section.mitigatedAccuracy.toFixed(1)}%{' '}
+                                      <Typography
+                                        component="span"
+                                        color={
+                                          section.mitigatedAccuracy >= section.accuracy
+                                            ? 'success.main'
+                                            : 'warning.main'
+                                        }
+                                        sx={{ fontWeight: 500 }}
+                                      >
+                                        ({section.mitigatedAccuracy >= section.accuracy ? '+' : ''}
+                                        {(section.mitigatedAccuracy - section.accuracy).toFixed(1)}
+                                        %)
+                                      </Typography>
+                                    </Typography>
+                                    {section.biasedMetricsCount !== undefined &&
+                                      section.totalMetrics !== undefined && (
+                                        <Typography variant="body2">
+                                          With mitigation applied, bias detected in{' '}
+                                          <strong>
+                                            {section.biasedMetricsCount} out of{' '}
+                                            {section.totalMetrics}
+                                          </strong>{' '}
+                                          metrics
+                                        </Typography>
+                                      )}
+                                  </Stack>
+                                </Alert>
+                              )}
+
                               <Grid
                                 container
-                                spacing={2}
+                                spacing={3}
                               >
-                                <Grid
-                                  item
-                                  xs={12}
-                                  sm={6}
-                                >
-                                  <Typography
-                                    variant="body2"
-                                    color="text.secondary"
-                                  >
-                                    <strong>Privileged Group:</strong> {section.privilegedGroup}
-                                  </Typography>
-                                </Grid>
-                                <Grid
-                                  item
-                                  xs={12}
-                                  sm={6}
-                                >
-                                  <Typography
-                                    variant="body2"
-                                    color="text.secondary"
-                                  >
-                                    <strong>Unprivileged Group:</strong> {section.unprivilegedGroup}
-                                  </Typography>
-                                </Grid>
-                              </Grid>
-                            </Box>
-
-                            {section.mitigatedAccuracy && (
-                              <Alert
-                                severity={
-                                  section.mitigatedAccuracy >= section.accuracy
-                                    ? 'success'
-                                    : 'warning'
-                                }
-                                icon={<ErrorOutline />}
-                                sx={{
-                                  borderRadius: 2,
-                                  '& .MuiAlert-icon': {
-                                    alignItems: 'center',
-                                  },
-                                }}
-                              >
-                                <Stack spacing={1}>
-                                  <Typography variant="body2">
-                                    Original Accuracy: {section.accuracy.toFixed(1)}%
-                                  </Typography>
-                                  <Typography variant="body2">
-                                    Accuracy after mitigation:{' '}
-                                    {section.mitigatedAccuracy.toFixed(1)}%{' '}
-                                    <Typography
-                                      component="span"
-                                      color={
-                                        section.mitigatedAccuracy >= section.accuracy
-                                          ? 'success.main'
-                                          : 'warning.main'
-                                      }
-                                      sx={{ fontWeight: 500 }}
-                                    >
-                                      ({section.mitigatedAccuracy >= section.accuracy ? '+' : ''}
-                                      {(section.mitigatedAccuracy - section.accuracy).toFixed(1)}
-                                      %)
-                                    </Typography>
-                                  </Typography>
-                                  {section.biasedMetricsCount !== undefined &&
-                                    section.totalMetrics !== undefined && (
-                                      <Typography variant="body2">
-                                        With mitigation applied, bias detected in{' '}
-                                        <strong>
-                                          {section.biasedMetricsCount} out of {section.totalMetrics}
-                                        </strong>{' '}
-                                        metrics
-                                      </Typography>
-                                    )}
-                                </Stack>
-                              </Alert>
-                            )}
-
-                            <Grid
-                              container
-                              spacing={3}
-                            >
-                              {/* {section.metrics.map((metric, idx) => (
+                                {/* {section.metrics.map((metric, idx) => (
                                 <Grid
                                   item
                                   xs={12}
@@ -1720,17 +1723,15 @@ const Page: NextPage = () => {
                                   </Stack>
                                 </Grid>
                               ))} */}
-                              <Grid
-                                item
-                                xs={12}
-                              >
-                                <MetricRadarChart metrics={section.metrics} />
+                                <Grid xs={12}>
+                                  <MetricRadarChart metrics={section.metrics} />
+                                </Grid>
                               </Grid>
-                            </Grid>
-                          </Stack>
-                        </Paper>
+                            </Stack>
+                          </Card>
+                        </Grid>
                       ))}
-                    </>
+                    </Grid>
                   )}
                 </Stack>
               );
