@@ -1,9 +1,11 @@
 name: Frontend Deployment
 
 on:
-  push:
-    branches:
-      - main
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Tag to deploy'
+        required: true
 
 jobs:
   deploy:
@@ -12,6 +14,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
+        with:
+          ref: ${{ github.event.inputs.tag }}
 
       - name: Deploy to VPS
         uses: appleboy/ssh-action@master
@@ -21,7 +25,8 @@ jobs:
           password: ${{ secrets.VPS_PASSWORD }}
           script: |
             cd /var/www/demo
-            git pull origin main
+            git fetch --all --tags
+            git checkout tags/${{ github.event.inputs.tag }}
             npm install
             npm run build
             pm2 restart bee-fair-v2
