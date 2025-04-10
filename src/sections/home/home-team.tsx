@@ -84,7 +84,7 @@ export const HomeTeam = () => {
             color="text.secondary"
             variant="subtitle1"
           >
-            The talented individuals behind BeeFair, working together to advance fairness and ethics
+            The talented individuals behind BeeFAME, working together to advance fairness and ethics
             in artificial intelligence
           </Typography>
         </Stack>

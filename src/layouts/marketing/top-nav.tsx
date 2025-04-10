@@ -101,7 +101,7 @@ export const TopNav: FC<TopNavProps> = (props) => {
               <Box
                 sx={{
                   display: 'inline-flex',
-                  height: 45,
+                  height: 65,
                 }}
               >
                 <Logo />

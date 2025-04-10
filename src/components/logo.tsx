@@ -7,7 +7,7 @@ export const Logo: FC = () => {
   return (
     <img
       src="/logo.svg"
-      alt="Bee Fair"
+      alt="BeeFAME"
     />
   );
 };

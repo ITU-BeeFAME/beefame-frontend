@@ -43,7 +43,7 @@ export const Footer = () => {
               color="text.secondary"
               variant="body2"
             >
-              © {currentYear} BeeFair. All rights reserved.
+              © {currentYear} BeeFAME. All rights reserved.
             </Typography>
           </Stack>
 

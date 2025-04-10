@@ -46,7 +46,7 @@ const CustomApp = (props: CustomAppProps) => {
   return (
     <CacheProvider value={emotionCache}>
       <Head>
-        <title>Bee Fair ITU</title>
+        <title>BeeFAME ITU</title>
         <meta
           name="viewport"
           content="initial-scale=1, width=device-width"
