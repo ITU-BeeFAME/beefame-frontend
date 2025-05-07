@@ -69,6 +69,11 @@ interface Classifier {
   id: number;
   name: string;
   url: string;
+  params: {
+    title: string;
+    type: 'int' | 'float' | 'str' | 'bool';
+    default?: number | string | boolean;
+  }[];
 }
 
 interface BiasMetric {
@@ -675,6 +680,10 @@ const Page: NextPage = () => {
   const [analysisData, setAnalysisData] = useState<BiasSection[]>([]);
   const [analysisLoading, setAnalysisLoading] = useState(false);
   const [analysisError, setAnalysisError] = useState<string | null>(null);
+  const [classifierParams, setClassifierParams] = useState<{
+    [classifierId: number]: { [param: string]: any };
+  }>({});
+  const [paramPage, setParamPage] = useState<Record<number, number>>({});
 
   useEffect(() => {
     const fetchData = async () => {
@@ -716,7 +725,10 @@ const Page: NextPage = () => {
       try {
         const response = await api.post<AnalysisResponse>('/analysis', {
           dataset_names: selectedDatasets.map((dataset) => dataset.slug),
-          classifier_names: selectedClassifiers.map((classifier) => classifier.name),
+          classifiers: selectedClassifiers.map((classifier) => ({
+            name: classifier.name,
+            params: classifierParams[classifier.id] || {}
+          }))        
         });
 
         // Transform API response to BiasSection format
@@ -854,14 +866,24 @@ const Page: NextPage = () => {
   };
 
   const handleClassifierSelect = (classifier: Classifier) => {
-    setSelectedClassifiers((prevClassifiers) => {
-      const isSelected = prevClassifiers.some((c) => c.id === classifier.id);
-      if (isSelected) {
-        return prevClassifiers.filter((c) => c.id !== classifier.id);
-      } else {
-        return [...prevClassifiers, classifier];
-      }
-    });
+    const isSelected = selectedClassifiers.some((c) => c.id === classifier.id);
+
+    if (isSelected) {
+      setSelectedClassifiers((prev) => prev.filter((c) => c.id !== classifier.id));
+      setClassifierParams((prev) => {
+        const updated = { ...prev };
+        delete updated[classifier.id];
+        return updated;
+      });
+    } else {
+      setSelectedClassifiers((prev) => [...prev, classifier]);
+      setClassifierParams((prev) => ({
+        ...prev,
+        [classifier.id]: Object.fromEntries(
+          classifier.params.map((param) => [param.title, param.default ?? ''])
+        ),
+      }));
+    }
   };
 
   const handleMitigationSelect = (mitigation: string) => {
@@ -1195,6 +1217,89 @@ const Page: NextPage = () => {
                                         />
                                       )}
                                     </Stack>
+                                    {selectedClassifiers.some((c) => c.id === classifier.id) && (
+                                      <Box sx={{ mt: 2, ml: 4 }}>
+                                        {(() => {
+                                          const currentPage = paramPage[classifier.id] ?? 0;
+                                          const startIndex = currentPage * 4;
+                                          const paginatedParams = classifier.params.slice(startIndex, startIndex + 4);
+                                          const totalPages = Math.ceil(classifier.params.length / 4);
+
+                                          return (
+                                            <>
+                                              <Grid container spacing={2}>
+                                                {paginatedParams.map((param, idx) => (
+                                                  <Grid xs={12} sm={6} key={param.title + idx}>
+                                                    <Typography variant="caption" sx={{ fontWeight: 600 }}>
+                                                      {param.title} ({param.type})
+                                                    </Typography>
+                                                    <input
+                                                      type={param.type === 'int' || param.type === 'float' ? 'number' : 'text'}
+                                                      value={classifierParams[classifier.id]?.[param.title] ?? ''}
+                                                      onClick={(e) => e.stopPropagation()}
+                                                      onChange={(e) =>
+                                                        setClassifierParams((prev) => ({
+                                                          ...prev,
+                                                          [classifier.id]: {
+                                                            ...prev[classifier.id],
+                                                            [param.title]:
+                                                              param.type === 'int'
+                                                                ? parseInt(e.target.value)
+                                                                : param.type === 'float'
+                                                                ? parseFloat(e.target.value)
+                                                                : e.target.value,
+                                                          },
+                                                        }))
+                                                      }
+                                                      style={{
+                                                        marginTop: 4,
+                                                        width: '100%',
+                                                        padding: '6px 10px',
+                                                        borderRadius: 4,
+                                                        border: '1px solid #ccc',
+                                                      }}
+                                                    />
+                                                  </Grid>
+                                                ))}
+                                              </Grid>
+                                              {totalPages > 1 && (
+                                                <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
+                                                  <Button
+                                                    onClick={(e) => {
+                                                      e.stopPropagation();
+                                                      setParamPage((prev) => ({
+                                                        ...prev,
+                                                        [classifier.id]: Math.max((prev[classifier.id] ?? 0) - 1, 0),
+                                                      }));
+                                                    }}
+                                                    disabled={currentPage === 0}
+                                                    size="small"
+                                                  >
+                                                    ← Prev
+                                                  </Button>
+                                                  <Box sx={{ mx: 2, display: 'flex', alignItems: 'center' }}>
+                                                    Page {currentPage + 1} of {totalPages}
+                                                  </Box>
+                                                  <Button
+                                                    onClick={(e) => {
+                                                      e.stopPropagation();
+                                                      setParamPage((prev) => ({
+                                                        ...prev,
+                                                        [classifier.id]: Math.min(currentPage + 1, totalPages - 1),
+                                                      }));
+                                                    }}
+                                                    disabled={currentPage >= totalPages - 1}
+                                                    size="small"
+                                                  >
+                                                    Next →
+                                                  </Button>
+                                                </Box>
+                                              )}
+                                            </>
+                                          );
+                                        })()}
+                                      </Box>
+                                    )}
                                   </Paper>
                                 </Grid>
                               ))}
