@@ -684,7 +684,7 @@ const Page: NextPage = () => {
     [classifierId: number]: { [param: string]: any };
   }>({});
   const [paramPage, setParamPage] = useState<Record<number, number>>({});
-
+  console.log('selectedDatasets : ', selectedDatasets);
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -727,8 +727,8 @@ const Page: NextPage = () => {
           dataset_names: selectedDatasets.map((dataset) => dataset.slug),
           classifiers: selectedClassifiers.map((classifier) => ({
             name: classifier.name,
-            params: classifierParams[classifier.id] || {}
-          }))        
+            params: classifierParams[classifier.id] || {},
+          })),
         });
 
         // Transform API response to BiasSection format
@@ -779,17 +779,52 @@ const Page: NextPage = () => {
       setActiveStep((prevStep) => prevStep + 1);
       setAnalysisLoading(true);
       setAnalysisError(null);
+      /* console.log('analysis data : ', analysisData); */
       try {
         const response = await api.post<AnalysisResponse>('/evaluation', {
           dataset_names: selectedDatasets.map((dataset) => dataset.slug),
           classifier_names: selectedClassifiers.map((classifier) => classifier.name),
           method_names: selectedMitigations,
         });
-
+        /* console.log('mitigation result before merging : ', response.data.data);
+        console.log('analysis data before merging : ', analysisData); */
         // Update existing analysis data with mitigation results
+        const newData = response.data.data;
+        const updated = analysisData.flatMap((entry) => {
+          const relatedMitigations = newData.filter(
+            (m: any) =>
+              m['Dataset Name'] === entry.datasetName &&
+              m['Sensitive Column'] === entry.protectedAttribute &&
+              m['Model Name'] === entry.classifierName
+          );
+
+          return relatedMitigations.map((m) => {
+            const mitigationMetrics = {
+              'Statistical Parity Difference (1-m)': 1 - m['Statistical Parity Difference'],
+              'Equal Opportunity Difference (1-m)': 1 - m['Equal Opportunity Difference'],
+              'Average Odds Difference (1-m)': 1 - m['Average Odds Difference'],
+              'Disparate Impact (m)': m['Disparate Impact'],
+              'Theil Index (1-m)': 1 - m['Theil Index'],
+            };
+
+            const newMetrics = entry.metrics.map((metric: any) => ({
+              ...metric,
+              /* @ts-ignore */
+              mitigatedValue: mitigationMetrics[metric.name],
+            }));
+
+            return {
+              ...entry,
+              methodName: m['Method Name'],
+              mitigatedAccuracy: m['Model Accuracy'] * 100,
+              metrics: newMetrics,
+            };
+          });
+        });
+        console.log('updated data after merging : ', updated);
         const updatedData = analysisData.map((section, index) => {
-          console.log('section : ', section);
-          console.log('index : ', index);
+          /*  console.log('section : ', section);
+          console.log('index : ', index); */
           const mitigatedResult = response.data.data;
           const mitigatedForSection = mitigatedResult.filter(
             (mItem) =>
@@ -797,7 +832,7 @@ const Page: NextPage = () => {
               mItem['Sensitive Column'] === section.protectedAttribute
           );
 
-          console.log('mitigatedForSection :', mitigatedForSection);
+          /* console.log('mitigatedForSection :', mitigatedForSection); */
 
           const manipulatedMitigated = mitigatedForSection.map((item) => {
             const mitigatedValues: BiasMetric[] = [
@@ -828,17 +863,12 @@ const Page: NextPage = () => {
             };
           });
 
-          console.log('manipulatedMitigated : ', manipulatedMitigated);
+          /* console.log('manipulatedMitigated : ', manipulatedMitigated); */
 
           return manipulatedMitigated;
         });
         // TO DO: Fix it nested array proble
-        setAnalysisData(updatedData.flatMap((data) => data));
-
-        console.log(
-          'updated Data : ',
-          updatedData.flatMap((data) => data)
-        );
+        setAnalysisData(updated);
       } catch (err) {
         setAnalysisError('Failed to apply mitigation. Please try again.');
         console.error('Error applying mitigation:', err);
@@ -1222,20 +1252,44 @@ const Page: NextPage = () => {
                                         {(() => {
                                           const currentPage = paramPage[classifier.id] ?? 0;
                                           const startIndex = currentPage * 4;
-                                          const paginatedParams = classifier.params.slice(startIndex, startIndex + 4);
-                                          const totalPages = Math.ceil(classifier.params.length / 4);
+                                          const paginatedParams = classifier.params.slice(
+                                            startIndex,
+                                            startIndex + 4
+                                          );
+                                          const totalPages = Math.ceil(
+                                            classifier.params.length / 4
+                                          );
 
                                           return (
                                             <>
-                                              <Grid container spacing={2}>
+                                              <Grid
+                                                container
+                                                spacing={2}
+                                              >
                                                 {paginatedParams.map((param, idx) => (
-                                                  <Grid xs={12} sm={6} key={param.title + idx}>
-                                                    <Typography variant="caption" sx={{ fontWeight: 600 }}>
+                                                  <Grid
+                                                    xs={12}
+                                                    sm={6}
+                                                    key={param.title + idx}
+                                                  >
+                                                    <Typography
+                                                      variant="caption"
+                                                      sx={{ fontWeight: 600 }}
+                                                    >
                                                       {param.title} ({param.type})
                                                     </Typography>
                                                     <input
-                                                      type={param.type === 'int' || param.type === 'float' ? 'number' : 'text'}
-                                                      value={classifierParams[classifier.id]?.[param.title] ?? ''}
+                                                      type={
+                                                        param.type === 'int' ||
+                                                        param.type === 'float'
+                                                          ? 'number'
+                                                          : 'text'
+                                                      }
+                                                      value={
+                                                        classifierParams[classifier.id]?.[
+                                                          param.title
+                                                        ] ?? ''
+                                                      }
                                                       onClick={(e) => e.stopPropagation()}
                                                       onChange={(e) =>
                                                         setClassifierParams((prev) => ({
@@ -1263,13 +1317,22 @@ const Page: NextPage = () => {
                                                 ))}
                                               </Grid>
                                               {totalPages > 1 && (
-                                                <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
+                                                <Box
+                                                  sx={{
+                                                    display: 'flex',
+                                                    justifyContent: 'center',
+                                                    mt: 2,
+                                                  }}
+                                                >
                                                   <Button
                                                     onClick={(e) => {
                                                       e.stopPropagation();
                                                       setParamPage((prev) => ({
                                                         ...prev,
-                                                        [classifier.id]: Math.max((prev[classifier.id] ?? 0) - 1, 0),
+                                                        [classifier.id]: Math.max(
+                                                          (prev[classifier.id] ?? 0) - 1,
+                                                          0
+                                                        ),
                                                       }));
                                                     }}
                                                     disabled={currentPage === 0}
@@ -1277,7 +1340,13 @@ const Page: NextPage = () => {
                                                   >
                                                     ← Prev
                                                   </Button>
-                                                  <Box sx={{ mx: 2, display: 'flex', alignItems: 'center' }}>
+                                                  <Box
+                                                    sx={{
+                                                      mx: 2,
+                                                      display: 'flex',
+                                                      alignItems: 'center',
+                                                    }}
+                                                  >
                                                     Page {currentPage + 1} of {totalPages}
                                                   </Box>
                                                   <Button
@@ -1285,7 +1354,10 @@ const Page: NextPage = () => {
                                                       e.stopPropagation();
                                                       setParamPage((prev) => ({
                                                         ...prev,
-                                                        [classifier.id]: Math.min(currentPage + 1, totalPages - 1),
+                                                        [classifier.id]: Math.min(
+                                                          currentPage + 1,
+                                                          totalPages - 1
+                                                        ),
                                                       }));
                                                     }}
                                                     disabled={currentPage >= totalPages - 1}
@@ -1706,18 +1778,41 @@ const Page: NextPage = () => {
                                     label={section.methodName}
                                   />
                                 </Typography>
-                                <Typography
-                                  variant="body2"
-                                  gutterBottom
-                                  color="text.secondary"
-                                  sx={{ fontWeight: 600 }}
-                                >
-                                  Protected Attribute: {section.protectedAttribute}
-                                </Typography>
+
                                 <Grid
                                   container
                                   spacing={2}
                                 >
+                                  <Grid
+                                    xs={12}
+                                    sm={6}
+                                  >
+                                    <Typography
+                                      variant="body2"
+                                      color="text.secondary"
+                                      sx={{ fontWeight: 600 }}
+                                    >
+                                      Protected Attribute: {section.protectedAttribute}
+                                    </Typography>
+                                  </Grid>
+                                  <Grid
+                                    xs={12}
+                                    sm={6}
+                                  >
+                                    <Typography
+                                      variant="body2"
+                                      color="text.secondary"
+                                      sx={{
+                                        overflow: 'hidden',
+                                        whiteSpace: 'nowrap',
+                                        textOverflow: 'ellipsis',
+                                        width: '100%',
+                                      }}
+                                    >
+                                      <strong>Classifier: </strong> {section.classifierName}
+                                    </Typography>
+                                  </Grid>
+
                                   <Grid
                                     xs={12}
                                     sm={6}
