@@ -882,6 +882,17 @@ const Page: NextPage = () => {
 
   const handleBack = () => {
     setActiveStep((prevStep) => prevStep - 1);
+    if (activeStep === 1) {
+      setSelectedDatasets([]);
+      setSelectedClassifiers([]);
+    }
+
+    if (activeStep === 3) {
+      setSelectedMitigations([]);
+    }
+    /* setSelectedDatasets([]);
+    setSelectedClassifiers([]);
+    setSelectedMitigations([]); */
   };
 
   const handleDatasetSelect = (dataset: Dataset) => {
@@ -976,6 +987,15 @@ const Page: NextPage = () => {
                       </Alert>
                     ) : (
                       <>
+                        <Alert
+                          icon={<ErrorOutline />}
+                          severity="info"
+                          sx={{ mb: 2 }}
+                        >
+                          In test scenarios where default parameters are employed, the results are
+                          retrieved from a precomputed cache to ensure consistency and reduce
+                          computation time.
+                        </Alert>
                         <Typography
                           variant="h6"
                           sx={{ mb: 2, fontWeight: 600, color: 'primary.main' }}
@@ -1413,20 +1433,7 @@ const Page: NextPage = () => {
                       </Typography>
                     </Box>
                   ) : analysisError ? (
-                    <Alert
-                      severity="error"
-                      action={
-                        <Button
-                          color="inherit"
-                          size="small"
-                          onClick={handleNext}
-                        >
-                          Retry
-                        </Button>
-                      }
-                    >
-                      {analysisError}
-                    </Alert>
+                    <Alert severity="error">{analysisError}</Alert>
                   ) : (
                     <>
                       <Box>
@@ -1725,24 +1732,7 @@ const Page: NextPage = () => {
                       </Typography>
                     </Box>
                   ) : analysisError ? (
-                    <Alert
-                      severity="error"
-                      action={
-                        <Button
-                          color="inherit"
-                          size="small"
-                          onClick={() => {
-                            setAnalysisLoading(true);
-                            setAnalysisError(null);
-                            handleNext();
-                          }}
-                        >
-                          Retry
-                        </Button>
-                      }
-                    >
-                      {analysisError}
-                    </Alert>
+                    <Alert severity="error">{analysisError}</Alert>
                   ) : (
                     <Grid
                       container
