@@ -10,7 +10,11 @@ import {
   Paper, 
   Grid,
   Divider,
-  Chip
+  Chip,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem
 } from '@mui/material';
 import ScatterPlot from "./charts/ScatterPlot";
 import {
@@ -173,7 +177,6 @@ function DatapointEditor() {
         };
       });
       
-      // Highlight the updated point
       setHighlightedPointId(evaluatedData.id);
       setTimeout(() => setHighlightedPointId(null), 2000);
     } catch (error: any) {
@@ -355,7 +358,6 @@ function DatapointEditor() {
               
               <Box sx={{ flexGrow: 1, overflowY: "auto", pr: 1 }}>
                 <Grid container spacing={1.5}>
-                  {/* Plot axis features */}
                   <Grid item xs={6}>
                     <TextField
                       fullWidth
@@ -379,25 +381,61 @@ function DatapointEditor() {
                     />
                   </Grid>
                   
-                  {/* All other features */}
-                  {Object.entries(internalSelectedPoint.features).map(([key, val]) => (
-                    <Grid item xs={12} key={key}>
-                      <TextField
-                        fullWidth
-                        size="small"
-                        label={key.charAt(0).toUpperCase() + key.slice(1).replace(/_/g, " ").replace(/-/g, " ")}
-                        type={typeof val === 'number' ? "number" : "text"}
-                        value={val}
-                        onChange={(e) => {
-                          const newValue = typeof val === 'number' 
-                            ? parseFloat(e.target.value) || 0
-                            : e.target.value;
-                          handleFeatureChange(key as keyof BaseDataFeatures, newValue);
-                        }}
-                        inputProps={typeof val === 'number' ? { step: "any" } : {}}
-                      />
-                    </Grid>
-                  ))}
+                  {Object.entries(internalSelectedPoint.features).map(([key, val]) => {
+                    const categoricalOptions: Record<string, string[]> = {
+                      workclass: ['Private', 'Self-emp-not-inc', 'Self-emp-inc', 'Federal-gov', 'Local-gov', 'State-gov', 'Without-pay', 'Never-worked'],
+                      education: ['Bachelors', 'Some-college', '11th', 'HS-grad', 'Prof-school', 'Assoc-acdm', 'Assoc-voc', '9th', '7th-8th', '12th', 'Masters', '1st-4th', '10th', 'Doctorate', '5th-6th', 'Preschool'],
+                      marital_status: ['Married-civ-spouse', 'Divorced', 'Never-married', 'Separated', 'Widowed', 'Married-spouse-absent', 'Married-AF-spouse'],
+                      occupation: ['Tech-support', 'Craft-repair', 'Other-service', 'Sales', 'Exec-managerial', 'Prof-specialty', 'Handlers-cleaners', 'Machine-op-inspct', 'Adm-clerical', 'Farming-fishing', 'Transport-moving', 'Priv-house-serv', 'Protective-serv', 'Armed-Forces'],
+                      relationship: ['Wife', 'Own-child', 'Husband', 'Not-in-family', 'Other-relative', 'Unmarried'],
+                      race: ['White', 'Asian-Pac-Islander', 'Amer-Indian-Eskimo', 'Other', 'Black'],
+                      sex: ['Male', 'Female'],
+                      native_country: ['United-States', 'Cambodia', 'England', 'Puerto-Rico', 'Canada', 'Germany', 'Outlying-US(Guam-USVI-etc)', 'India', 'Japan', 'Greece', 'South', 'China', 'Cuba', 'Iran', 'Honduras', 'Philippines', 'Italy', 'Poland', 'Jamaica', 'Vietnam', 'Mexico', 'Portugal', 'Ireland', 'France', 'Dominican-Republic', 'Laos', 'Ecuador', 'Taiwan', 'Haiti', 'Columbia', 'Hungary', 'Guatemala', 'Nicaragua', 'Scotland', 'Thailand', 'Yugoslavia', 'El-Salvador', 'Trinadad&Tobago', 'Peru', 'Hong', 'Holand-Netherlands']
+                    };
+                    
+                    const isNumeric = typeof val === 'number';
+                    const isCategorical = key in categoricalOptions;
+                    
+                    return (
+                      <Grid item xs={12} key={key}>
+                        {isCategorical ? (
+                          <FormControl fullWidth size="small">
+                            <InputLabel>{key.charAt(0).toUpperCase() + key.slice(1).replace(/_/g, " ")}</InputLabel>
+                            <Select
+                              value={val}
+                              label={key.charAt(0).toUpperCase() + key.slice(1).replace(/_/g, " ")}
+                              onChange={(e) => handleFeatureChange(key as keyof BaseDataFeatures, e.target.value)}
+                            >
+                              {categoricalOptions[key].map((option) => (
+                                <MenuItem key={option} value={option}>
+                                  {option}
+                                </MenuItem>
+                              ))}
+                            </Select>
+                          </FormControl>
+                        ) : (
+                          <TextField
+                            fullWidth
+                            size="small"
+                            label={key.charAt(0).toUpperCase() + key.slice(1).replace(/_/g, " ").replace(/-/g, " ")}
+                            type={isNumeric ? "number" : "text"}
+                            value={val}
+                            onChange={(e) => {
+                              const newValue = isNumeric 
+                                ? parseFloat(e.target.value) || 0
+                                : e.target.value;
+                              handleFeatureChange(key as keyof BaseDataFeatures, newValue);
+                            }}
+                            inputProps={isNumeric ? { 
+                              step: "any",
+                              min: key === 'age' ? 0 : undefined,
+                              max: key === 'age' ? 120 : undefined
+                            } : {}}
+                          />
+                        )}
+                      </Grid>
+                    );
+                  })}
                 </Grid>
               </Box>
             </>
