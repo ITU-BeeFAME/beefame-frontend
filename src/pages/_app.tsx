@@ -1,3 +1,4 @@
+// src/pages/_app.tsx
 import type { NextPage } from 'next';
 import type { AppProps } from 'next/app';
 import Head from 'next/head';
@@ -16,6 +17,8 @@ import { createTheme } from 'src/theme';
 import { createEmotionCache } from 'src/utils/create-emotion-cache';
 import { useEffect, useState } from 'react';
 
+import { BeeFameProvider } from 'src/contexts/BeeFameContext';
+
 const clientSideEmotionCache = createEmotionCache();
 
 export interface CustomAppProps extends AppProps {
@@ -33,13 +36,13 @@ const CustomApp = (props: CustomAppProps) => {
     paletteMode: 'light',
     responsiveFontSizes: true,
   });
-  useNprogress();
+  useNprogress(); 
 
   useEffect(() => {
     setShowSplashScreen(false);
   }, []);
 
-  useNprogress();
+  // useNprogress(); //duplicate call, couldnt figure out why, ask?
 
   const getLayout = Component.getLayout ?? ((page) => page);
 
@@ -52,11 +55,14 @@ const CustomApp = (props: CustomAppProps) => {
           content="initial-scale=1, width=device-width"
         />
       </Head>
-      <ThemeProvider theme={theme}>
-        <CssBaseline />
-        {showSplashScreen ? <SplashScreen /> : <>{getLayout(<Component {...pageProps} />)}</>}
-        <Toaster />
-      </ThemeProvider>
+      {}
+      <BeeFameProvider>
+        <ThemeProvider theme={theme}>
+          <CssBaseline />
+          {showSplashScreen ? <SplashScreen /> : <>{getLayout(<Component {...pageProps} />)}</>}
+          <Toaster />
+        </ThemeProvider>
+      </BeeFameProvider>
     </CacheProvider>
   );
 };

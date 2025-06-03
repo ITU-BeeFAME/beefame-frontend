@@ -48,6 +48,7 @@ import { NextPage } from 'next';
 import { Layout as MarketingLayout } from 'src/layouts/marketing';
 import { Seo } from 'src/components/seo';
 import { api } from 'src/lib/axios';
+import { useRouter } from 'next/router';
 
 interface SensitiveFeature {
   name: string;
@@ -684,6 +685,9 @@ const Page: NextPage = () => {
     [classifierId: number]: { [param: string]: any };
   }>({});
   const [paramPage, setParamPage] = useState<Record<number, number>>({});
+
+  const router = useRouter();//router imported and added, find here
+
   console.log('selectedDatasets : ', selectedDatasets);
   useEffect(() => {
     const fetchData = async () => {
@@ -1744,6 +1748,25 @@ const Page: NextPage = () => {
                       {analysisError}
                     </Alert>
                   ) : (
+                   <>
+                      <Box sx={{ display: 'flex', justifyContent: 'center', mb: 3 }}>
+                        <Button
+                          variant="contained"
+                          size="large"
+                          onClick={() => router.push('/beespector')}
+                          sx={{
+                            bgcolor: 'primary.main',
+                            color: 'white',
+                            px: 4,
+                            py: 1.5,
+                            '&:hover': {
+                              bgcolor: 'primary.dark',
+                            }
+                          }}
+                        >
+                          Deep Dive with Beespector →
+                        </Button>
+                      </Box>
                     <Grid
                       container
                       spacing={2}
@@ -1932,6 +1955,7 @@ const Page: NextPage = () => {
                         </Grid>
                       ))}
                     </Grid>
+                  </>
                   )}
                 </Stack>
               );

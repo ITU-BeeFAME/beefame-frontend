@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react';
 import { Box, Container, Paper, Typography, CircularProgress, Alert, Button } from '@mui/material';
 import { NextPage } from 'next';
+import { useRouter } from 'next/router';
 import { Layout as MarketingLayout } from 'src/layouts/marketing';
 import { Seo } from 'src/components/seo';
+import { useBeeFame } from 'src/contexts/BeeFameContext';
 
 import BeespectorNavbar from 'src/components/beespector/Navbar';
 import DatapointEditor from 'src/components/beespector/DatapointEditor';
@@ -13,6 +15,9 @@ import PerformanceFairness from 'src/components/beespector/PerformanceFairness';
 import { beespectorApi } from 'src/lib/beespectorAxios';
 
 const BeespectorPage: NextPage = () => {
+  const router = useRouter();
+  const { selectedDatasets, selectedClassifiers, selectedMitigations, classifierParams } = useBeeFame();
+  
   const [activeTab, setActiveTab] = useState("datapoint");
   const [isInitialized, setIsInitialized] = useState(false);
   const [isInitializing, setIsInitializing] = useState(false);
@@ -20,29 +25,43 @@ const BeespectorPage: NextPage = () => {
   const [contextInfo, setContextInfo] = useState<any>(null);
 
   useEffect(() => {
+    // Check if we have the required context from BeeFAME
+    if (selectedDatasets.length === 0 || selectedClassifiers.length === 0) {
+      // If not, redirect back to demo page
+      router.push('/demo');
+      return;
+    }
+    
+    // Initialize with context from BeeFAME
     initializeContext();
-  }, []);
+  }, [selectedDatasets, selectedClassifiers]);
 
   const initializeContext = async () => {
     setIsInitializing(true);
     setInitError(null);
     
     try {
+      // Use the first dataset and classifier for now
+      // In a full implementation, we might allow selecting which combination to explore
+      const dataset = selectedDatasets[0];
+      const classifier = selectedClassifiers[0];
+      const mitigation = selectedMitigations.length > 0 ? selectedMitigations[0] : "None";
+      
+      // Find the sensitive feature that was analyzed
+      const sensitiveFeature = dataset.sensitive_features[0]; // Default to first
+      
       const initParams = {
-        dataset_name: "adult",
-        base_classifier: "logistic_regression",
-        classifier_params: {
-          C: 1.0,
-          solver: "liblinear"
-        },
-        mitigation_method: "reweighing",
+        dataset_name: dataset.slug,
+        base_classifier: classifier.name.toLowerCase().replace(/\s+/g, '_'),
+        classifier_params: classifierParams[classifier.id] || {},
+        mitigation_method: mitigation.toLowerCase().replace(/\s+/g, '_'),
         mitigation_params: {},
-        sensitive_feature: "sex",
-        x1_feature: "age",
+        sensitive_feature: sensitiveFeature.name,
+        x1_feature: "age", // These should be configurable
         x2_feature: "hours_per_week"
       };
 
-      console.log("Initializing Beespector context with:", initParams);
+      console.log("Initializing Beespector with BeeFAME context:", initParams);
       
       const response = await beespectorApi.post('/initialize_context', initParams);
       
@@ -63,7 +82,7 @@ const BeespectorPage: NextPage = () => {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '400px' }}>
         <CircularProgress />
-        <Typography sx={{ ml: 2 }}>Initializing Beespector with models...</Typography>
+        <Typography sx={{ ml: 2 }}>Initializing Beespector with your analysis...</Typography>
       </Box>
     );
   }
@@ -74,8 +93,8 @@ const BeespectorPage: NextPage = () => {
         <Alert severity="error" sx={{ mb: 2 }}>
           {initError}
         </Alert>
-        <Button variant="contained" onClick={initializeContext}>
-          Retry Initialization
+        <Button variant="contained" onClick={() => router.push('/demo')}>
+          Back to Analysis
         </Button>
       </Container>
     );
@@ -83,7 +102,7 @@ const BeespectorPage: NextPage = () => {
 
   return (
     <>
-      <Seo title="Beespector | BeeFAME" />
+      <Seo title="Beespector Deep Dive | BeeFAME" />
       <Box
         component="main"
         sx={{
@@ -94,24 +113,32 @@ const BeespectorPage: NextPage = () => {
         <Container maxWidth="xl">
           <Box sx={{ mb: 3 }}>
             <Typography variant="h3" gutterBottom>
-              Beespector
+              Beespector Deep Dive
             </Typography>
             {contextInfo && (
-              <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+              <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', mb: 2 }}>
                 <Typography variant="body2" color="text.secondary">
-                  Dataset: <strong>{contextInfo.dataset}</strong>
+                  Dataset: <strong>{selectedDatasets[0]?.name}</strong>
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
-                  Base Model: <strong>{contextInfo.base_classifier}</strong>
+                  Base Model: <strong>{selectedClassifiers[0]?.name}</strong>
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
-                  Mitigation: <strong>{contextInfo.mitigation_method}</strong>
+                  Mitigation: <strong>{selectedMitigations[0] || 'None'}</strong>
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
                   Samples: <strong>{contextInfo.n_samples}</strong>
                 </Typography>
               </Box>
             )}
+            <Button 
+              variant="outlined" 
+              size="small" 
+              onClick={() => router.push('/demo')}
+              sx={{ mb: 2 }}
+            >
+              ← Back to Analysis
+            </Button>
           </Box>
           
           <BeespectorNavbar activeTab={activeTab} onChangeTab={setActiveTab} />
