@@ -7,7 +7,7 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-  Legend
+  Legend,
 } from 'recharts';
 
 interface ScatterPlotProps {
@@ -23,16 +23,16 @@ interface ScatterPlotProps {
   yAxisLabel?: string;
 }
 
-const ScatterPlot: React.FC<ScatterPlotProps> = ({ 
-  data, 
-  onPointClick, 
+const ScatterPlot: React.FC<ScatterPlotProps> = ({
+  data,
+  onPointClick,
   customShape,
-  xAxisLabel = "X1",
-  yAxisLabel = "X2"
+  xAxisLabel = 'X1',
+  yAxisLabel = 'X2',
 }) => {
   // Separate data by prediction label
-  const positiveData = data.filter(d => d.pred_label === 1);
-  const negativeData = data.filter(d => d.pred_label === 0);
+  const positiveData = data.filter((d) => d.pred_label === 1);
+  const negativeData = data.filter((d) => d.pred_label === 0);
 
   const defaultDot = (props: any) => {
     const { cx, cy, fill } = props;
@@ -50,11 +50,15 @@ const ScatterPlot: React.FC<ScatterPlotProps> = ({
   };
 
   return (
-    <div className="chart-container" style={{ width: '100%', height: '400px' }}>
-      <ResponsiveContainer width="100%" height="100%">
-        <ScatterChart
-          margin={{ top: 20, right: 20, bottom: 40, left: 40 }}
-        >
+    <div
+      className="chart-container"
+      style={{ width: '100%', height: '400px' }}
+    >
+      <ResponsiveContainer
+        width="100%"
+        height="100%"
+      >
+        <ScatterChart margin={{ top: 20, right: 20, bottom: 40, left: 40 }}>
           <CartesianGrid strokeDasharray="3 3" />
           <XAxis
             type="number"
@@ -68,21 +72,27 @@ const ScatterPlot: React.FC<ScatterPlotProps> = ({
             name={yAxisLabel}
             label={{ value: yAxisLabel, angle: -90, position: 'insideLeft' }}
           />
-          <Tooltip 
+          <Tooltip
             cursor={{ strokeDasharray: '3 3' }}
             content={({ active, payload }) => {
               if (active && payload && payload.length > 0) {
                 const data = payload[0].payload;
                 return (
-                  <div style={{ 
-                    backgroundColor: 'rgba(255, 255, 255, 0.95)', 
-                    border: '1px solid #ccc',
-                    borderRadius: '4px',
-                    padding: '8px'
-                  }}>
+                  <div
+                    style={{
+                      backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                      border: '1px solid #ccc',
+                      borderRadius: '4px',
+                      padding: '8px',
+                    }}
+                  >
                     <p style={{ margin: '0 0 4px 0', fontWeight: 'bold' }}>ID: {data.id}</p>
-                    <p style={{ margin: '0 0 2px 0' }}>{xAxisLabel}: {data.x.toFixed(2)}</p>
-                    <p style={{ margin: '0 0 2px 0' }}>{yAxisLabel}: {data.y.toFixed(2)}</p>
+                    <p style={{ margin: '0 0 2px 0' }}>
+                      {xAxisLabel}: {data.x.toFixed(2)}
+                    </p>
+                    <p style={{ margin: '0 0 2px 0' }}>
+                      {yAxisLabel}: {data.y.toFixed(2)}
+                    </p>
                     <p style={{ margin: '0' }}>Prediction: {data.pred_label}</p>
                   </div>
                 );
@@ -91,7 +101,7 @@ const ScatterPlot: React.FC<ScatterPlotProps> = ({
             }}
           />
           <Legend />
-          
+
           <Scatter
             name="Negative (0)"
             data={negativeData}

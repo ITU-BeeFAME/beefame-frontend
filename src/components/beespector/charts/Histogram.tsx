@@ -1,8 +1,9 @@
-import React from "react";
-import { BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid } from "recharts";
+import React from 'react';
+import { BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts';
+
 type HistogramPoint = {
-    bin: string;
-    value: number;
+  bin: string;
+  value: number;
 };
 
 type HistogramProps = {
@@ -20,7 +21,7 @@ function Histogram({ data, featureName }: HistogramProps) {
       {}
       {}
       <BarChart
-        width={400} 
+        width={400}
         height={200}
         data={data}
         margin={{ top: 20, right: 20, bottom: 20, left: 20 }}
@@ -29,7 +30,10 @@ function Histogram({ data, featureName }: HistogramProps) {
         <XAxis dataKey="bin" />
         <YAxis allowDecimals={false} /> {}
         <Tooltip />
-        <Bar dataKey="value" fill="#82ca9d" />
+        <Bar
+          dataKey="value"
+          fill="#82ca9d"
+        />
       </BarChart>
     </div>
   );

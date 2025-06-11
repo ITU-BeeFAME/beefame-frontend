@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { 
-  Box, 
-  Typography, 
-  Paper, 
-  Alert, 
+import {
+  Box,
+  Typography,
+  Paper,
+  Alert,
   CircularProgress,
   Table,
   TableBody,
@@ -15,7 +15,7 @@ import {
   MenuItem,
   FormControl,
   InputLabel,
-  Grid
+  Grid,
 } from '@mui/material';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { beespectorApi } from 'src/lib/beespectorAxios';
@@ -37,7 +37,7 @@ function FeaturesPage() {
     setError(null);
     try {
       const response = await beespectorApi.get('/features');
-      
+
       // For now, if the endpoint returns empty, generate dummy data
       if (!response.data.features || response.data.features.length === 0) {
         // Generate dummy feature statistics
@@ -57,8 +57,8 @@ function FeaturesPage() {
               { bin: '36-45', value: 60 },
               { bin: '46-55', value: 40 },
               { bin: '56-65', value: 20 },
-              { bin: '66+', value: 5 }
-            ]
+              { bin: '66+', value: 5 },
+            ],
           },
           {
             featureName: 'hours_per_week',
@@ -75,8 +75,8 @@ function FeaturesPage() {
               { bin: '31-40', value: 100 },
               { bin: '41-50', value: 40 },
               { bin: '51-60', value: 15 },
-              { bin: '61+', value: 5 }
-            ]
+              { bin: '61+', value: 5 },
+            ],
           },
           {
             featureName: 'capital_gain',
@@ -92,8 +92,8 @@ function FeaturesPage() {
               { bin: '1-5000', value: 10 },
               { bin: '5001-10000', value: 5 },
               { bin: '10001-50000', value: 3 },
-              { bin: '50001+', value: 2 }
-            ]
+              { bin: '50001+', value: 2 },
+            ],
           },
           {
             featureName: 'education_num',
@@ -108,9 +108,9 @@ function FeaturesPage() {
               { bin: '1-4', value: 10 },
               { bin: '5-8', value: 30 },
               { bin: '9-12', value: 120 },
-              { bin: '13-16', value: 40 }
-            ]
-          }
+              { bin: '13-16', value: 40 },
+            ],
+          },
         ];
         setFeatures(dummyFeatures);
         if (dummyFeatures.length > 0) {
@@ -131,18 +131,27 @@ function FeaturesPage() {
   };
 
   const sortedFeatures = [...features].sort((a, b) => {
-    if (sortBy === 'count' || sortBy === 'missing' || sortBy === 'mean' || 
-        sortBy === 'min' || sortBy === 'max' || sortBy === 'median' || sortBy === 'std') {
+    if (
+      sortBy === 'count' ||
+      sortBy === 'missing' ||
+      sortBy === 'mean' ||
+      sortBy === 'min' ||
+      sortBy === 'max' ||
+      sortBy === 'median' ||
+      sortBy === 'std'
+    ) {
       return b[sortBy] - a[sortBy];
     }
     return 0;
   });
 
-  const selectedFeatureData = features.find(f => f.featureName === selectedFeature);
+  const selectedFeatureData = features.find((f) => f.featureName === selectedFeature);
 
   if (isLoading) {
     return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '400px' }}>
+      <Box
+        sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '400px' }}
+      >
         <CircularProgress />
         <Typography sx={{ ml: 2 }}>Loading feature statistics...</Typography>
       </Box>
@@ -159,17 +168,38 @@ function FeaturesPage() {
 
   return (
     <Box>
-      <Typography variant="h4" gutterBottom>Features Analysis</Typography>
-      <Typography variant="body1" color="text.secondary" paragraph>
+      <Typography
+        variant="h4"
+        gutterBottom
+      >
+        Features Analysis
+      </Typography>
+      <Typography
+        variant="body1"
+        color="text.secondary"
+        paragraph
+      >
         Explore statistical properties and distributions of features in the dataset.
       </Typography>
-      
-      <Grid container spacing={3}>
-        <Grid item xs={12} md={7}>
+
+      <Grid
+        container
+        spacing={3}
+      >
+        <Grid
+          item
+          xs={12}
+          md={7}
+        >
           <Paper sx={{ p: 2 }}>
-            <Box sx={{ mb: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <Box
+              sx={{ mb: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
+            >
               <Typography variant="h6">Feature Statistics</Typography>
-              <FormControl size="small" sx={{ minWidth: 120 }}>
+              <FormControl
+                size="small"
+                sx={{ minWidth: 120 }}
+              >
                 <InputLabel>Sort by</InputLabel>
                 <Select
                   value={sortBy}
@@ -183,9 +213,12 @@ function FeaturesPage() {
                 </Select>
               </FormControl>
             </Box>
-            
+
             <TableContainer sx={{ maxHeight: 400 }}>
-              <Table stickyHeader size="small">
+              <Table
+                stickyHeader
+                size="small"
+              >
                 <TableHead>
                   <TableRow>
                     <TableCell>Feature</TableCell>
@@ -200,7 +233,7 @@ function FeaturesPage() {
                 </TableHead>
                 <TableBody>
                   {sortedFeatures.map((feature) => (
-                    <TableRow 
+                    <TableRow
                       key={feature.featureName}
                       hover
                       selected={feature.featureName === selectedFeature}
@@ -222,10 +255,17 @@ function FeaturesPage() {
             </TableContainer>
           </Paper>
         </Grid>
-        
-        <Grid item xs={12} md={5}>
+
+        <Grid
+          item
+          xs={12}
+          md={5}
+        >
           <Paper sx={{ p: 2 }}>
-            <Typography variant="h6" gutterBottom>
+            <Typography
+              variant="h6"
+              gutterBottom
+            >
               Distribution: {selectedFeature}
             </Typography>
             {selectedFeatureData && (
@@ -236,7 +276,10 @@ function FeaturesPage() {
                     <XAxis dataKey="bin" />
                     <YAxis />
                     <Tooltip />
-                    <Bar dataKey="value" fill="#8884d8" />
+                    <Bar
+                      dataKey="value"
+                      fill="#8884d8"
+                    />
                   </BarChart>
                 </ResponsiveContainer>
               </Box>

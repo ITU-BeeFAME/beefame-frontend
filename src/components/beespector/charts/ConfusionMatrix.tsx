@@ -1,4 +1,4 @@
-import React from "react";
+import React from 'react';
 
 type ConfusionMatrixProps = {
   matrix: { tn: number; fp: number; fn: number; tp: number };
@@ -8,7 +8,7 @@ function ConfusionMatrix({ matrix }: ConfusionMatrixProps) {
   const { tn, fp, fn, tp } = matrix;
 
   return (
-    <table style={{ borderCollapse: "collapse" }}>
+    <table style={{ borderCollapse: 'collapse' }}>
       <thead>
         <tr>
           <th></th>
@@ -19,13 +19,13 @@ function ConfusionMatrix({ matrix }: ConfusionMatrixProps) {
       <tbody>
         <tr>
           <td>Actual 0</td>
-          <td style={{ border: "1px solid #ccc", padding: "6px" }}>{tn}</td>
-          <td style={{ border: "1px solid #ccc", padding: "6px" }}>{fp}</td>
+          <td style={{ border: '1px solid #ccc', padding: '6px' }}>{tn}</td>
+          <td style={{ border: '1px solid #ccc', padding: '6px' }}>{fp}</td>
         </tr>
         <tr>
           <td>Actual 1</td>
-          <td style={{ border: "1px solid #ccc", padding: "6px" }}>{fn}</td>
-          <td style={{ border: "1px solid #ccc", padding: "6px" }}>{tp}</td>
+          <td style={{ border: '1px solid #ccc', padding: '6px' }}>{fn}</td>
+          <td style={{ border: '1px solid #ccc', padding: '6px' }}>{tp}</td>
         </tr>
       </tbody>
     </table>
