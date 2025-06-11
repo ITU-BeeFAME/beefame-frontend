@@ -1195,6 +1195,9 @@ const Page: NextPage = () => {
                         >
                           Select Classifier
                         </Typography>
+                        <Alert severity="info">
+                          All parameters are constant for demo to get faster results.
+                        </Alert>
                         <Paper sx={{ p: 2, bgcolor: 'background.default' }}>
                           <FormControl sx={{ width: '100%' }}>
                             <Grid
@@ -1225,7 +1228,6 @@ const Page: NextPage = () => {
                                       cursor: 'pointer',
                                       '&:hover': {
                                         borderColor: 'primary.main',
-                                        bgcolor: 'grey.50',
                                       },
                                     }}
                                   >
@@ -1340,6 +1342,7 @@ const Page: NextPage = () => {
                                                           ? 'number'
                                                           : 'text'
                                                       }
+                                                      disabled
                                                       value={
                                                         classifierParams[classifier.id]?.[
                                                           param.title
@@ -1366,6 +1369,8 @@ const Page: NextPage = () => {
                                                         padding: '6px 10px',
                                                         borderRadius: 4,
                                                         border: '1px solid #ccc',
+                                                        backgroundColor: '#f5f5f5',
+                                                        pointerEvents: 'none',
                                                       }}
                                                     />
                                                   </Grid>
