@@ -32,15 +32,15 @@ const items: Item[] = [
   },
   {
     title: 'Features',
-    path: '#features',
+    path: '/#features',
   },
   {
     title: 'Teams',
-    path: '#teams',
+    path: '/#teams',
   },
   {
     title: 'FAQ',
-    path: '#faq',
+    path: '/#faq',
   },
 ];
 
