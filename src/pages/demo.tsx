@@ -49,6 +49,7 @@ import { Layout as MarketingLayout } from 'src/layouts/marketing';
 import { Seo } from 'src/components/seo';
 import { api } from 'src/lib/axios';
 import { useRouter } from 'next/router';
+import { useBeeFame } from 'src/contexts/BeeFameContext';
 
 interface SensitiveFeature {
   name: string;
@@ -687,6 +688,13 @@ const Page: NextPage = () => {
   const [paramPage, setParamPage] = useState<Record<number, number>>({});
 
   const router = useRouter();//router imported and added, find here
+  const {
+    setSelectedDatasets: setContextDatasets,
+    setSelectedClassifiers: setContextClassifiers,
+    setSelectedMitigations: setContextMitigations,
+    setAnalysisData: setContextAnalysisData,
+    setClassifierParams: setContextClassifierParams
+  } = useBeeFame();
 
   console.log('selectedDatasets : ', selectedDatasets);
   useEffect(() => {
@@ -773,6 +781,7 @@ const Page: NextPage = () => {
         });
 
         setAnalysisData(transformedData);
+        setContextAnalysisData(transformedData);
       } catch (err) {
         setAnalysisError('Failed to analyze dataset. Please try again.');
         console.error('Error analyzing dataset:', err);
@@ -873,6 +882,7 @@ const Page: NextPage = () => {
         });
         // TO DO: Fix it nested array proble
         setAnalysisData(updated);
+        setContextAnalysisData(updated);
       } catch (err) {
         setAnalysisError('Failed to apply mitigation. Please try again.');
         console.error('Error applying mitigation:', err);
@@ -891,11 +901,15 @@ const Page: NextPage = () => {
   const handleDatasetSelect = (dataset: Dataset) => {
     setSelectedDatasets((prevDatasets) => {
       const isSelected = prevDatasets.some((d) => d.id === dataset.id);
+      let newDatasets;
       if (isSelected) {
-        return prevDatasets.filter((d) => d.id !== dataset.id);
+        newDatasets = prevDatasets.filter((d) => d.id !== dataset.id);
       } else {
-        return [...prevDatasets, dataset];
+        newDatasets = [...prevDatasets, dataset];
       }
+      // Update context
+      setContextDatasets(newDatasets);
+      return newDatasets;
     });
   };
 
@@ -903,31 +917,48 @@ const Page: NextPage = () => {
     const isSelected = selectedClassifiers.some((c) => c.id === classifier.id);
 
     if (isSelected) {
-      setSelectedClassifiers((prev) => prev.filter((c) => c.id !== classifier.id));
+      setSelectedClassifiers((prev) => {
+        const newClassifiers = prev.filter((c) => c.id !== classifier.id);
+        setContextClassifiers(newClassifiers);
+        return newClassifiers;
+      });
       setClassifierParams((prev) => {
         const updated = { ...prev };
         delete updated[classifier.id];
+        setContextClassifierParams(updated);
         return updated;
       });
     } else {
-      setSelectedClassifiers((prev) => [...prev, classifier]);
-      setClassifierParams((prev) => ({
-        ...prev,
-        [classifier.id]: Object.fromEntries(
-          classifier.params.map((param) => [param.title, param.default ?? ''])
-        ),
-      }));
+      setSelectedClassifiers((prev) => {
+        const newClassifiers = [...prev, classifier];
+        setContextClassifiers(newClassifiers);
+        return newClassifiers;
+      });
+      setClassifierParams((prev) => {
+        const updated = {
+          ...prev,
+          [classifier.id]: Object.fromEntries(
+            classifier.params.map((param) => [param.title, param.default ?? ''])
+          ),
+        };
+        setContextClassifierParams(updated);
+        return updated;
+      });
     }
   };
 
   const handleMitigationSelect = (mitigation: string) => {
     setSelectedMitigations((prevMitigations) => {
       const isSelected = prevMitigations.includes(mitigation);
+      let newMitigations;
       if (isSelected) {
-        return prevMitigations.filter((m) => m !== mitigation);
+        newMitigations = prevMitigations.filter((m) => m !== mitigation);
       } else {
-        return [...prevMitigations, mitigation];
+        newMitigations = [...prevMitigations, mitigation];
       }
+      // Update context
+      setContextMitigations(newMitigations);
+      return newMitigations;
     });
   };
 
@@ -1749,24 +1780,34 @@ const Page: NextPage = () => {
                     </Alert>
                   ) : (
                    <>
-                      <Box sx={{ display: 'flex', justifyContent: 'center', mb: 3 }}>
-                        <Button
-                          variant="contained"
-                          size="large"
-                          onClick={() => router.push('/beespector')}
-                          sx={{
-                            bgcolor: 'primary.main',
-                            color: 'white',
-                            px: 4,
-                            py: 1.5,
-                            '&:hover': {
-                              bgcolor: 'primary.dark',
-                            }
-                          }}
-                        >
-                          Deep Dive with Beespector →
-                        </Button>
-                      </Box>
+                          <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', mb: 3, gap: 2 }}>
+                            <Button
+                              variant="contained"
+                              size="large"
+                              onClick={() => router.push('/beespector')}
+                              disabled={selectedDatasets.length !== 1 || selectedClassifiers.length !== 1 || selectedMitigations.length !== 1}
+                              sx={{
+                                bgcolor: 'primary.main',
+                                color: 'white',
+                                px: 4,
+                                py: 1.5,
+                                '&:hover': {
+                                  bgcolor: 'primary.dark',
+                                },
+                                '&:disabled': {
+                                  bgcolor: 'grey.300',
+                                  color: 'grey.500'
+                                }
+                              }}
+                            >
+                              Deep Dive with Beespector →
+                            </Button>
+                            {(selectedDatasets.length > 1 || selectedClassifiers.length > 1 || selectedMitigations.length > 1) && (
+                              <Typography variant="caption" color="text.secondary" sx={{ textAlign: 'center' }}>
+                                Beespector requires single dataset, classifier, and mitigation selection
+                              </Typography>
+                            )}
+                          </Box>
                     <Grid
                       container
                       spacing={2}
