@@ -687,13 +687,13 @@ const Page: NextPage = () => {
   }>({});
   const [paramPage, setParamPage] = useState<Record<number, number>>({});
 
-  const router = useRouter();//router imported and added, find here
+  const router = useRouter(); //router imported and added, find here
   const {
     setSelectedDatasets: setContextDatasets,
     setSelectedClassifiers: setContextClassifiers,
     setSelectedMitigations: setContextMitigations,
     setAnalysisData: setContextAnalysisData,
-    setClassifierParams: setContextClassifierParams
+    setClassifierParams: setContextClassifierParams,
   } = useBeeFame();
 
   console.log('selectedDatasets : ', selectedDatasets);
@@ -1769,186 +1769,207 @@ const Page: NextPage = () => {
                   ) : analysisError ? (
                     <Alert severity="error">{analysisError}</Alert>
                   ) : (
-                   <>
-                          <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', mb: 3, gap: 2 }}>
-                            <Button
-                              variant="contained"
-                              size="large"
-                              onClick={() => router.push('/beespector')}
-                              disabled={selectedDatasets.length !== 1 || selectedClassifiers.length !== 1 || selectedMitigations.length !== 1}
+                    <>
+                      <Box
+                        sx={{
+                          display: 'flex',
+                          flexDirection: 'column',
+                          alignItems: 'center',
+                          mb: 3,
+                          gap: 2,
+                        }}
+                      >
+                        <Button
+                          variant="contained"
+                          size="large"
+                          onClick={() => router.push('/beespector')}
+                          disabled={
+                            selectedDatasets.length !== 1 ||
+                            selectedClassifiers.length !== 1 ||
+                            selectedMitigations.length !== 1
+                          }
+                          sx={{
+                            bgcolor: 'primary.main',
+                            color: 'white',
+                            px: 4,
+                            py: 1.5,
+                            '&:hover': {
+                              bgcolor: 'primary.dark',
+                            },
+                            '&:disabled': {
+                              bgcolor: 'grey.300',
+                              color: 'grey.500',
+                            },
+                          }}
+                        >
+                          Deep Dive with Beespector →
+                        </Button>
+                        {(selectedDatasets.length > 1 ||
+                          selectedClassifiers.length > 1 ||
+                          selectedMitigations.length > 1) && (
+                          <Typography
+                            variant="caption"
+                            color="text.secondary"
+                            sx={{ textAlign: 'center' }}
+                          >
+                            Beespector requires single dataset, classifier, and mitigation selection
+                          </Typography>
+                        )}
+                      </Box>
+                      <Grid
+                        container
+                        spacing={2}
+                      >
+                        {analysisData.map((section, index) => (
+                          <Grid
+                            xs={6}
+                            key={index}
+                          >
+                            <Card
                               sx={{
-                                bgcolor: 'primary.main',
-                                color: 'white',
-                                px: 4,
-                                py: 1.5,
-                                '&:hover': {
-                                  bgcolor: 'primary.dark',
-                                },
-                                '&:disabled': {
-                                  bgcolor: 'grey.300',
-                                  color: 'grey.500'
-                                }
+                                border: '1px solid transparent',
+                                borderColor: 'divider',
+                                borderRadius: 2,
+                                py: 3,
+                                px: 2,
                               }}
                             >
-                              Deep Dive with Beespector →
-                            </Button>
-                            {(selectedDatasets.length > 1 || selectedClassifiers.length > 1 || selectedMitigations.length > 1) && (
-                              <Typography variant="caption" color="text.secondary" sx={{ textAlign: 'center' }}>
-                                Beespector requires single dataset, classifier, and mitigation selection
-                              </Typography>
-                            )}
-                          </Box>
-                    <Grid
-                      container
-                      spacing={2}
-                    >
-                      {analysisData.map((section, index) => (
-                        <Grid
-                          xs={6}
-                          key={index}
-                        >
-                          <Card
-                            sx={{
-                              border: '1px solid transparent',
-                              borderColor: 'divider',
-                              borderRadius: 2,
-                              py: 3,
-                              px: 2,
-                            }}
-                          >
-                            <Stack spacing={3}>
-                              <Box>
-                                <Typography
-                                  variant="h6"
-                                  sx={{ color: 'primary.main', fontWeight: 600, mb: 1 }}
-                                >
-                                  {
-                                    selectedDatasets.find((ds) => ds.slug === section.datasetName)
-                                      ?.name
-                                  }{' '}
-                                  <Chip
-                                    size="small"
-                                    sx={{ ml: 1 }}
-                                    label={section.methodName}
-                                  />
-                                </Typography>
+                              <Stack spacing={3}>
+                                <Box>
+                                  <Typography
+                                    variant="h6"
+                                    sx={{ color: 'primary.main', fontWeight: 600, mb: 1 }}
+                                  >
+                                    {
+                                      selectedDatasets.find((ds) => ds.slug === section.datasetName)
+                                        ?.name
+                                    }{' '}
+                                    <Chip
+                                      size="small"
+                                      sx={{ ml: 1 }}
+                                      label={section.methodName}
+                                    />
+                                  </Typography>
+
+                                  <Grid
+                                    container
+                                    spacing={2}
+                                  >
+                                    <Grid
+                                      xs={12}
+                                      sm={6}
+                                    >
+                                      <Typography
+                                        variant="body2"
+                                        color="text.secondary"
+                                        sx={{ fontWeight: 600 }}
+                                      >
+                                        Protected Attribute: {section.protectedAttribute}
+                                      </Typography>
+                                    </Grid>
+                                    <Grid
+                                      xs={12}
+                                      sm={6}
+                                    >
+                                      <Typography
+                                        variant="body2"
+                                        color="text.secondary"
+                                        sx={{
+                                          overflow: 'hidden',
+                                          whiteSpace: 'nowrap',
+                                          textOverflow: 'ellipsis',
+                                          width: '100%',
+                                        }}
+                                      >
+                                        <strong>Classifier: </strong> {section.classifierName}
+                                      </Typography>
+                                    </Grid>
+
+                                    <Grid
+                                      xs={12}
+                                      sm={6}
+                                    >
+                                      <Typography
+                                        variant="body2"
+                                        color="text.secondary"
+                                      >
+                                        <strong>Privileged Group:</strong> {section.privilegedGroup}
+                                      </Typography>
+                                    </Grid>
+                                    <Grid
+                                      xs={12}
+                                      sm={6}
+                                    >
+                                      <Typography
+                                        variant="body2"
+                                        color="text.secondary"
+                                      >
+                                        <strong>Unprivileged Group:</strong>{' '}
+                                        {section.unprivilegedGroup}
+                                      </Typography>
+                                    </Grid>
+                                  </Grid>
+                                </Box>
+
+                                {section.mitigatedAccuracy && (
+                                  <Alert
+                                    severity={
+                                      section.mitigatedAccuracy >= section.accuracy
+                                        ? 'success'
+                                        : 'warning'
+                                    }
+                                    icon={<ErrorOutline />}
+                                    sx={{
+                                      borderRadius: 2,
+                                      '& .MuiAlert-icon': {
+                                        alignItems: 'center',
+                                      },
+                                    }}
+                                  >
+                                    <Stack spacing={1}>
+                                      <Typography variant="body2">
+                                        Original Accuracy: {section.accuracy.toFixed(1)}%
+                                      </Typography>
+                                      <Typography variant="body2">
+                                        Accuracy after mitigation:{' '}
+                                        {section.mitigatedAccuracy.toFixed(1)}%{' '}
+                                        <Typography
+                                          component="span"
+                                          color={
+                                            section.mitigatedAccuracy >= section.accuracy
+                                              ? 'success.main'
+                                              : 'warning.main'
+                                          }
+                                          sx={{ fontWeight: 500 }}
+                                        >
+                                          (
+                                          {section.mitigatedAccuracy >= section.accuracy ? '+' : ''}
+                                          {(section.mitigatedAccuracy - section.accuracy).toFixed(
+                                            1
+                                          )}
+                                          %)
+                                        </Typography>
+                                      </Typography>
+                                      {section.biasedMetricsCount !== undefined &&
+                                        section.totalMetrics !== undefined && (
+                                          <Typography variant="body2">
+                                            With mitigation applied, bias detected in{' '}
+                                            <strong>
+                                              {section.biasedMetricsCount} out of{' '}
+                                              {section.totalMetrics}
+                                            </strong>{' '}
+                                            metrics
+                                          </Typography>
+                                        )}
+                                    </Stack>
+                                  </Alert>
+                                )}
 
                                 <Grid
                                   container
-                                  spacing={2}
+                                  spacing={3}
                                 >
-                                  <Grid
-                                    xs={12}
-                                    sm={6}
-                                  >
-                                    <Typography
-                                      variant="body2"
-                                      color="text.secondary"
-                                      sx={{ fontWeight: 600 }}
-                                    >
-                                      Protected Attribute: {section.protectedAttribute}
-                                    </Typography>
-                                  </Grid>
-                                  <Grid
-                                    xs={12}
-                                    sm={6}
-                                  >
-                                    <Typography
-                                      variant="body2"
-                                      color="text.secondary"
-                                      sx={{
-                                        overflow: 'hidden',
-                                        whiteSpace: 'nowrap',
-                                        textOverflow: 'ellipsis',
-                                        width: '100%',
-                                      }}
-                                    >
-                                      <strong>Classifier: </strong> {section.classifierName}
-                                    </Typography>
-                                  </Grid>
-
-                                  <Grid
-                                    xs={12}
-                                    sm={6}
-                                  >
-                                    <Typography
-                                      variant="body2"
-                                      color="text.secondary"
-                                    >
-                                      <strong>Privileged Group:</strong> {section.privilegedGroup}
-                                    </Typography>
-                                  </Grid>
-                                  <Grid
-                                    xs={12}
-                                    sm={6}
-                                  >
-                                    <Typography
-                                      variant="body2"
-                                      color="text.secondary"
-                                    >
-                                      <strong>Unprivileged Group:</strong>{' '}
-                                      {section.unprivilegedGroup}
-                                    </Typography>
-                                  </Grid>
-                                </Grid>
-                              </Box>
-
-                              {section.mitigatedAccuracy && (
-                                <Alert
-                                  severity={
-                                    section.mitigatedAccuracy >= section.accuracy
-                                      ? 'success'
-                                      : 'warning'
-                                  }
-                                  icon={<ErrorOutline />}
-                                  sx={{
-                                    borderRadius: 2,
-                                    '& .MuiAlert-icon': {
-                                      alignItems: 'center',
-                                    },
-                                  }}
-                                >
-                                  <Stack spacing={1}>
-                                    <Typography variant="body2">
-                                      Original Accuracy: {section.accuracy.toFixed(1)}%
-                                    </Typography>
-                                    <Typography variant="body2">
-                                      Accuracy after mitigation:{' '}
-                                      {section.mitigatedAccuracy.toFixed(1)}%{' '}
-                                      <Typography
-                                        component="span"
-                                        color={
-                                          section.mitigatedAccuracy >= section.accuracy
-                                            ? 'success.main'
-                                            : 'warning.main'
-                                        }
-                                        sx={{ fontWeight: 500 }}
-                                      >
-                                        ({section.mitigatedAccuracy >= section.accuracy ? '+' : ''}
-                                        {(section.mitigatedAccuracy - section.accuracy).toFixed(1)}
-                                        %)
-                                      </Typography>
-                                    </Typography>
-                                    {section.biasedMetricsCount !== undefined &&
-                                      section.totalMetrics !== undefined && (
-                                        <Typography variant="body2">
-                                          With mitigation applied, bias detected in{' '}
-                                          <strong>
-                                            {section.biasedMetricsCount} out of{' '}
-                                            {section.totalMetrics}
-                                          </strong>{' '}
-                                          metrics
-                                        </Typography>
-                                      )}
-                                  </Stack>
-                                </Alert>
-                              )}
-
-                              <Grid
-                                container
-                                spacing={3}
-                              >
-                                {/* {section.metrics.map((metric, idx) => (
+                                  {/* {section.metrics.map((metric, idx) => (
                                 <Grid
                                   item
                                   xs={12}
@@ -1977,16 +1998,16 @@ const Page: NextPage = () => {
                                   </Stack>
                                 </Grid>
                               ))} */}
-                                <Grid xs={12}>
-                                  <MetricRadarChart metrics={section.metrics} />
+                                  <Grid xs={12}>
+                                    <MetricRadarChart metrics={section.metrics} />
+                                  </Grid>
                                 </Grid>
-                              </Grid>
-                            </Stack>
-                          </Card>
-                        </Grid>
-                      ))}
-                    </Grid>
-                  </>
+                              </Stack>
+                            </Card>
+                          </Grid>
+                        ))}
+                      </Grid>
+                    </>
                   )}
                 </Stack>
               );

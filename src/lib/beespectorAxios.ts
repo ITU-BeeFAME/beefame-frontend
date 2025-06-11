@@ -1,13 +1,13 @@
-import axios from "axios";
+import axios from 'axios';
 
-const beespectorApiHost = process.env.NEXT_PUBLIC_BEESPECTOR_API_HOST || 'http://localhost:8000';
+const beespectorApiHost = process.env.NEXT_PUBLIC_BEESPECTOR_API_HOST || 'http://localhost:8001';
 
 export const beespectorApi = axios.create({
   baseURL: `${beespectorApiHost}/api`,
   timeout: 200000,
   headers: {
     'Content-Type': 'application/json',
-  }
+  },
 });
 
 beespectorApi.interceptors.request.use(
