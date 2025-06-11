@@ -17,18 +17,18 @@ interface ScatterPlotProps {
     y: number;
     pred_label: number;
   }>;
-  onPointClick?: (data: any) => void;
+  onPointClick: (data: any) => void;
   customShape?: (props: any) => React.ReactElement;
-  highlightedId?: number | null;
-  selectedId?: number | null;
+  xAxisLabel?: string;
+  yAxisLabel?: string;
 }
 
 const ScatterPlot: React.FC<ScatterPlotProps> = ({ 
   data, 
   onPointClick, 
   customShape,
-  highlightedId,
-  selectedId 
+  xAxisLabel = "X1",
+  yAxisLabel = "X2"
 }) => {
   // Separate data by prediction label
   const positiveData = data.filter(d => d.pred_label === 1);
@@ -56,17 +56,17 @@ const ScatterPlot: React.FC<ScatterPlotProps> = ({
           margin={{ top: 20, right: 20, bottom: 40, left: 40 }}
         >
           <CartesianGrid strokeDasharray="3 3" />
-          <XAxis 
-            type="number" 
-            dataKey="x" 
-            name="X1"
-            label={{ value: 'Age', position: 'insideBottom', offset: -10 }}
+          <XAxis
+            type="number"
+            dataKey="x"
+            name={xAxisLabel}
+            label={{ value: xAxisLabel, position: 'insideBottom', offset: -10 }}
           />
-          <YAxis 
-            type="number" 
-            dataKey="y" 
-            name="X2"
-            label={{ value: 'Hours per Week', angle: -90, position: 'insideLeft' }}
+          <YAxis
+            type="number"
+            dataKey="y"
+            name={yAxisLabel}
+            label={{ value: yAxisLabel, angle: -90, position: 'insideLeft' }}
           />
           <Tooltip 
             cursor={{ strokeDasharray: '3 3' }}
@@ -81,8 +81,8 @@ const ScatterPlot: React.FC<ScatterPlotProps> = ({
                     padding: '8px'
                   }}>
                     <p style={{ margin: '0 0 4px 0', fontWeight: 'bold' }}>ID: {data.id}</p>
-                    <p style={{ margin: '0 0 2px 0' }}>Age: {data.x}</p>
-                    <p style={{ margin: '0 0 2px 0' }}>Hours/Week: {data.y}</p>
+                    <p style={{ margin: '0 0 2px 0' }}>{xAxisLabel}: {data.x.toFixed(2)}</p>
+                    <p style={{ margin: '0 0 2px 0' }}>{yAxisLabel}: {data.y.toFixed(2)}</p>
                     <p style={{ margin: '0' }}>Prediction: {data.pred_label}</p>
                   </div>
                 );

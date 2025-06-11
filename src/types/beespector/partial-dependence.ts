@@ -1,5 +1,9 @@
-export type PartialDependence = {
+export type PartialDependencePoint = {
   x: number;
-  pd_x1: number;
-  pd_x2: number;
+  base: number;
+  mitigated: number;
+};
+
+export type PartialDependenceData = {
+  [featureName: string]: PartialDependencePoint[];
 };
