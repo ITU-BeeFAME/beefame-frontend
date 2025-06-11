@@ -20,83 +20,74 @@ const BeespectorPage: NextPage = () => {
   
   const [activeTab, setActiveTab] = useState("datapoint");
   const [isInitialized, setIsInitialized] = useState(false);
-  const [isInitializing, setIsInitializing] = useState(false);
+  const [isInitializing, setIsInitializing] = useState(true);
   const [initError, setInitError] = useState<string | null>(null);
   const [contextInfo, setContextInfo] = useState<any>(null);
 
   useEffect(() => {
-    // Check if we have the required context from BeeFAME
-    if (selectedDatasets.length === 0 || selectedClassifiers.length === 0) {
-      // If not, redirect back to demo page
-      router.push('/demo');
-      return;
+    if (selectedDatasets.length > 0 && selectedClassifiers.length > 0) {
+      initializeContext();
+    } else {
+      setTimeout(() => { router.push('/demo'); }, 100);
     }
-    
-    // Initialize with context from BeeFAME
-    initializeContext();
-  }, [selectedDatasets, selectedClassifiers]);
+  }, []);
 
   const initializeContext = async () => {
     setIsInitializing(true);
     setInitError(null);
-    
     try {
-      // Use the first dataset and classifier for now
-      // In a full implementation, we might allow selecting which combination to explore
       const dataset = selectedDatasets[0];
       const classifier = selectedClassifiers[0];
       const mitigation = selectedMitigations.length > 0 ? selectedMitigations[0] : "None";
-      
-      // Find the sensitive feature that was analyzed
-      const sensitiveFeature = dataset.sensitive_features[0]; // Default to first
-      
+      const sensitiveFeatureConfig = dataset.sensitive_features[0];
+      let sensitiveFeatureName = sensitiveFeatureConfig.name.toLowerCase();
+      if (sensitiveFeatureName === 'gender') sensitiveFeatureName = 'sex';
+      const classifierSlug = classifier.name.toLowerCase().replace(/\s+/g, '_').replace('_(svc)', '').replace('_classifier', '');
       const initParams = {
-        dataset_name: dataset.slug,
-        base_classifier: classifier.name.toLowerCase().replace(/\s+/g, '_'),
+        dataset_name: dataset.slug, base_classifier: classifierSlug,
         classifier_params: classifierParams[classifier.id] || {},
         mitigation_method: mitigation.toLowerCase().replace(/\s+/g, '_'),
-        mitigation_params: {},
-        sensitive_feature: sensitiveFeature.name,
-        x1_feature: "age", // These should be configurable
-        x2_feature: "hours_per_week"
+        sensitive_feature: sensitiveFeatureName,
       };
-
-      console.log("Initializing Beespector with BeeFAME context:", initParams);
-      
       const response = await beespectorApi.post('/initialize_context', initParams);
-      
-      console.log("Context initialized:", response.data);
       setContextInfo(response.data);
       setIsInitialized(true);
-      
     } catch (error: any) {
-      console.error("Failed to initialize context:", error);
-      setInitError(error.response?.data?.detail || error.message || "Failed to initialize Beespector");
-      setIsInitialized(false);
+      const errorMessage = error.response?.data?.detail || error.message || "An unknown error occurred.";
+      setInitError(errorMessage);
     } finally {
       setIsInitializing(false);
     }
   };
 
-  if (isInitializing) {
+  const renderContent = () => {
+    if (isInitializing) {
+      return (
+        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '400px', flexDirection: 'column', gap: 2, textAlign: 'center' }}>
+          <CircularProgress />
+          <Typography variant="h6">Initializing Beespector...</Typography>
+          <Typography color="text.secondary">Model training may take up to a minute for large datasets.</Typography>
+        </Box>
+      );
+    }
+    if (initError) {
+      return (
+        <Container maxWidth="md" sx={{ py: 3, textAlign: 'center' }}>
+          <Alert severity="error" sx={{ mb: 2, textAlign: 'left' }}><strong>Initialization Failed:</strong> {initError}</Alert>
+          <Button variant="contained" onClick={() => router.push('/demo')}>Return to Analysis Setup</Button>
+        </Container>
+      );
+    }
+    if (!isInitialized) {
+      return <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '400px' }}><Typography>Waiting for initialization...</Typography></Box>
+    }
     return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '400px' }}>
-        <CircularProgress />
-        <Typography sx={{ ml: 2 }}>Initializing Beespector with your analysis...</Typography>
-      </Box>
-    );
-  }
-
-  if (initError) {
-    return (
-      <Container maxWidth="md" sx={{ py: 3 }}>
-        <Alert severity="error" sx={{ mb: 2 }}>
-          {initError}
-        </Alert>
-        <Button variant="contained" onClick={() => router.push('/demo')}>
-          Back to Analysis
-        </Button>
-      </Container>
+      <>
+        {activeTab === "datapoint" && <DatapointEditor />}
+        {activeTab === "partial" && <PartialDependencies />}
+        {activeTab === "performance" && <PerformanceFairness />}
+        {activeTab === "features" && <FeaturesPage />}
+      </>
     );
   }
 
@@ -107,75 +98,25 @@ const BeespectorPage: NextPage = () => {
         component="main"
         sx={{
           flexGrow: 1,
-          py: 3,
+          paddingTop: '80px', 
         }}
       >
         <Container maxWidth="xl">
           <Box sx={{ mb: 3 }}>
-            <Typography variant="h3" gutterBottom>
-              Beespector Deep Dive
-            </Typography>
-            {contextInfo && (
-              <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', mb: 2 }}>
-                <Typography variant="body2" color="text.secondary">
-                  Dataset: <strong>{selectedDatasets[0]?.name}</strong>
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  Base Model: <strong>{selectedClassifiers[0]?.name}</strong>
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  Mitigation: <strong>{selectedMitigations[0] || 'None'}</strong>
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  Samples: <strong>{contextInfo.n_samples}</strong>
-                </Typography>
+            <Typography variant="h3" gutterBottom>Beespector Deep Dive</Typography>
+            {contextInfo ? (
+              <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', mb: 2, textTransform: 'capitalize' }}>
+                <Typography variant="body2" color="text.secondary">Dataset: <strong>{contextInfo.dataset}</strong></Typography>
+                <Typography variant="body2" color="text.secondary">Base Model: <strong>{contextInfo.base_classifier.replace(/_/g, ' ')}</strong></Typography>
+                <Typography variant="body2" color="text.secondary">Mitigation: <strong>{contextInfo.mitigation_method.replace(/_/g, ' ')}</strong></Typography>
+                <Typography variant="body2" color="text.secondary">Samples: <strong>{contextInfo.n_samples}</strong></Typography>
               </Box>
-            )}
-            <Button 
-              variant="outlined" 
-              size="small" 
-              onClick={() => router.push('/demo')}
-              sx={{ mb: 2 }}
-            >
-              ← Back to Analysis
-            </Button>
+            ) : (!isInitializing && !initError && <Box sx={{ height: '20px', mb: 2 }} />)}
+            <Button variant="outlined" size="small" onClick={() => router.push('/demo')} sx={{ mb: 2 }}>← Back to Analysis</Button>
           </Box>
-          
           <BeespectorNavbar activeTab={activeTab} onChangeTab={setActiveTab} />
-          
-          <Paper 
-            elevation={1} 
-            sx={{ 
-              p: 3, 
-              mt: 3, 
-              borderRadius: 2, 
-              bgcolor: 'background.paper',
-              minHeight: '600px'
-            }}
-          >
-            {!isInitialized ? (
-              <Box sx={{ 
-                display: 'flex', 
-                justifyContent: 'center', 
-                alignItems: 'center', 
-                minHeight: '400px',
-                flexDirection: 'column'
-              }}>
-                <Typography color="text.secondary" gutterBottom>
-                  Beespector context not initialized
-                </Typography>
-                <Button variant="contained" onClick={initializeContext} sx={{ mt: 2 }}>
-                  Initialize Context
-                </Button>
-              </Box>
-            ) : (
-              <>
-                {activeTab === "datapoint" && <DatapointEditor />}
-                {activeTab === "partial" && <PartialDependencies />}
-                {activeTab === "performance" && <PerformanceFairness />}
-                {activeTab === "features" && <FeaturesPage />}
-              </>
-            )}
+          <Paper elevation={1} sx={{ p: 3, mt: 3, borderRadius: 2, bgcolor: 'background.paper', minHeight: '600px' }}>
+            {renderContent()}
           </Paper>
         </Container>
       </Box>

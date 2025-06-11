@@ -4,7 +4,7 @@ const beespectorApiHost = process.env.NEXT_PUBLIC_BEESPECTOR_API_HOST || 'http:/
 
 export const beespectorApi = axios.create({
   baseURL: `${beespectorApiHost}/api`,
-  timeout: 10000,
+  timeout: 200000,
   headers: {
     'Content-Type': 'application/json',
   }
