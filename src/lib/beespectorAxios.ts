@@ -1,7 +1,6 @@
 import axios from 'axios';
 
-const beespectorApiHost =
-  process.env.NEXT_PUBLIC_BEESPECTOR_API_HOST || 'https://beespector.beefair.site';
+const beespectorApiHost = 'https://beespector.beefair.site';
 
 export const beespectorApi = axios.create({
   baseURL: `${beespectorApiHost}/api`,
