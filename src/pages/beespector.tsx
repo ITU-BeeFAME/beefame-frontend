@@ -129,9 +129,9 @@ const BeespectorPage: NextPage = () => {
     return (
       <>
         {activeTab === 'datapoint' && <DatapointEditor />}
-        {activeTab === 'partial' && <PartialDependencies />}
-        {activeTab === 'performance' && <PerformanceFairness />}
-        {activeTab === 'features' && <FeaturesPage />}
+        {/*activeTab === 'partial' && <PartialDependencies />*/}
+        {/*activeTab === 'performance' && <PerformanceFairness />*/}
+        {/*activeTab === 'features' && <FeaturesPage />*/}
       </>
     );
   };
