@@ -2,7 +2,7 @@
 import axios from 'axios';
 
 // Use the live backend URL instead of localhost
-const baseURL = 'https://api.beefair.site';
+const baseURL = 'https://api.beefame.site';
 
 export const api = axios.create({
   baseURL: baseURL,
