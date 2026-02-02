@@ -16,6 +16,7 @@ import {
   Stack,
   Alert,
   FormControl,
+  TextField,
   CircularProgress,
 } from '@mui/material';
 import Grid from '@mui/material/Unstable_Grid2';
@@ -682,6 +683,7 @@ const Page: NextPage = () => {
   const [analysisData, setAnalysisData] = useState<BiasSection[]>([]);
   const [analysisLoading, setAnalysisLoading] = useState(false);
   const [analysisError, setAnalysisError] = useState<string | null>(null);
+  const [testSize, setTestSize] = useState(0.2);
   const [classifierParams, setClassifierParams] = useState<{
     [classifierId: number]: { [param: string]: any };
   }>({});
@@ -741,6 +743,7 @@ const Page: NextPage = () => {
             name: classifier.name,
             params: classifierParams[classifier.id] || {},
           })),
+          test_size: testSize,
         });
 
         // Transform API response to BiasSection format
@@ -798,6 +801,7 @@ const Page: NextPage = () => {
           dataset_names: selectedDatasets.map((dataset) => dataset.slug),
           classifier_names: selectedClassifiers.map((classifier) => classifier.name),
           method_names: selectedMitigations,
+          test_size: testSize,
         });
         /* console.log('mitigation result before merging : ', response.data.data);
         console.log('analysis data before merging : ', analysisData); */
@@ -1188,6 +1192,30 @@ const Page: NextPage = () => {
                             </Grid>
                           ))}
                         </Grid>
+
+                        <Typography
+                          variant="h6"
+                          sx={{ mb: 2, mt: 4, fontWeight: 600, color: 'primary.main' }}
+                        >
+                          Select Test/Train Split Ratio
+                        </Typography>
+                        <Paper sx={{ p: 2, bgcolor: 'background.default', mb: 2 }}>
+                          <FormControl sx={{ width: '100%' }}>
+                            <TextField
+                              label="Test size"
+                              type="number"
+                              value={testSize}
+                              onChange={(event) => {
+                                const nextValue = Number(event.target.value);
+                                if (!Number.isNaN(nextValue)) {
+                                  setTestSize(nextValue);
+                                }
+                              }}
+                              inputProps={{ min: 0.05, max: 0.95, step: 0.05 }}
+                              helperText="Use a value between 0 and 1 (e.g., 0.2 = 20% test, 80% train)."
+                            />
+                          </FormControl>
+                        </Paper>
 
                         <Typography
                           variant="h6"

@@ -1,6 +1,7 @@
 import axios from 'axios';
 
 const beespectorApiHost = 'https://beespector.beefame.site';
+// const beespectorApiHost = 'http://localhost:8001';
 
 export const beespectorApi = axios.create({
   baseURL: `${beespectorApiHost}/api`,

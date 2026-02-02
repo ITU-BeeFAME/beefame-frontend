@@ -3,6 +3,7 @@ import axios from 'axios';
 
 // Use the live backend URL instead of localhost
 const baseURL = 'https://api.beefame.site';
+// const baseURL = 'http://localhost:8000';
 
 export const api = axios.create({
   baseURL: baseURL,
